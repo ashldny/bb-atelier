@@ -1,45 +1,112 @@
 const saveBtn = document.getElementById('saveBtn');
 const resetBtn = document.getElementById('resetBtn');
 
-// When Apply Theme button is clicked, settings are saved and sent to content script
+// ── Apply Theme ───────────────────────────────
 saveBtn.addEventListener('click', () => {
+
   const settings = {
-    bgColor:     document.getElementById('bgColor').value,
-    textColor:   document.getElementById('textColor').value,
+    bgColor: document.getElementById('bgColor').value,
+    textColor: document.getElementById('textColor').value,
     accentColor: document.getElementById('accentColor').value,
+    hoverColor: document.getElementById('hoverColor').value,
   };
 
-  chrome.storage.sync.set({ bbTheme: settings }, () => {
-    sendToContent(settings); // ← added here, inside the click handler
-    saveBtn.textContent = '✓ Saved!';
-    setTimeout(() => saveBtn.textContent = 'Apply Theme', 1500);
-  });
-});
+  // Save settings
+  chrome.storage.sync.set(
+    { bbTheme: settings },
+    () => {
 
-// When Reset button is clicked, settings are reset and default theme is applied
-resetBtn.addEventListener('click', () => {
-  chrome.storage.sync.remove('bbTheme', () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      chrome.tabs.sendMessage(tabs[0].id, { type: 'BB_THEME_RESET' });
-    });
-    sendToContent({ bgColor: '', textColor: '', accentColor: '' }); // send empty settings to reset
-  });
-});
+      // Find current tab
+      chrome.tabs.query(
+        {
+          active: true,
+          currentWindow: true
+        },
+        (tabs) => {
 
-// When popup opens, load saved settings and fill in the inputs
-chrome.storage.sync.get('bbTheme', (data) => {
-  const settings = data.bbTheme;
-  if (!settings) return;
+          if (!tabs[0]) return;
 
-  document.getElementById('bgColor').value     = settings.bgColor;
-  document.getElementById('textColor').value   = settings.textColor;
-  document.getElementById('accentColor').value = settings.accentColor;
-});
+          // Send live update
+          chrome.tabs.sendMessage(
+            tabs[0].id,
+            {
+              type: 'BB_THEME_UPDATE',
+              settings
+            },
+            () => {
 
-function sendToContent(settings) {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, { type: 'BB_THEME_UPDATE', settings });
+              if (chrome.runtime.lastError) {
+                console.error(
+                  chrome.runtime.lastError.message
+                );
+              } else {
+                console.log('Theme updated');
+              }
+
+            }
+          );
+
+        }
+      );
+
+      saveBtn.textContent = 'Saved!';
+
+      setTimeout(() => {
+        saveBtn.textContent = 'Apply Theme';
+      }, 1500);
+
     }
-  });
-}
+  );
+
+});
+
+// ── Reset Theme ───────────────────────────────
+resetBtn.addEventListener('click', () => {
+
+  chrome.storage.sync.remove(
+    'bbTheme',
+    () => {
+
+      chrome.tabs.query(
+        {
+          active: true,
+          currentWindow: true
+        },
+        (tabs) => {
+
+          if (!tabs[0]) return;
+
+          chrome.tabs.sendMessage(
+            tabs[0].id,
+            {
+              type: 'BB_THEME_RESET'
+            }
+          );
+
+        }
+      );
+
+    }
+  );
+
+});
+
+// ── Load Saved Settings ───────────────────────
+chrome.storage.sync.get(
+  'bbTheme',
+  (data) => {
+
+    const settings = data.bbTheme;
+
+    if (!settings) return;
+
+    document.getElementById('bgColor').value = settings.bgColor || '#0f172a';
+
+    document.getElementById('textColor').value = settings.textColor || '#e2e8f0';
+
+    document.getElementById('accentColor').value = settings.accentColor || '#6366f1';
+
+    document.getElementById('hoverColor').value = settings.hoverColor || '#1e293b';
+
+  }
+);

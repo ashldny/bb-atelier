@@ -1,31 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-   <title>Blackboard Theme Customizer</title>
-   <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blackboard Theme</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-  <body>
-    <h1>Blackboard Extension</h1>
-    <div class="field">
-      <label>Background Color</label>
-      <input type="color" id="bgColor" value="#0f172a" />
-    </div>
 
-    <div class="field">
-      <label>Text Color</label>
-      <input type="color" id="textColor" value="#e2e8f0" />
-    </div>
+<body>
+  <h1>Blackboard Theme</h1>
 
-    <div class="field">
-      <label>Text Accent Color</label>
-      <input type="color" id="accentColor" value="#6366f1" />
-    </div>
+  <div class="field">
+    <label>Background Color</label>
+    <input type="color" id="bgColor" value="#0f172a"/>
+  </div>
 
-    <button id="saveBtn">Apply Theme</button>
-    <button id="resetBtn">Reset Theme</button>
+  <div class="field">
+    <label>Text Color</label>
+    <input type="color" id="textColor" value="#e2e8f0"/>
+  </div>
 
+  <div class="field">
+    <label>Accent Color</label>
+    <input type="color" id="accentColor" value="#6366f1"/>
+  </div>
 
+  <div class="field">
+    <label>Hover Color</label>
+    <input type="color" id="hoverColor" value="#1e293b"/>
+  </div>
 
-    <script src="popup.js"></script>
-  </body> 
+  <button id="saveBtn">Apply Theme</button>
+
+  <button id="resetBtn">Reset Theme</button>
+
+  <script src="popup.js"></script>
+
+</body>
 </html>

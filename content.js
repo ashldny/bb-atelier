@@ -1,122 +1,147 @@
-console.log('BB Theme: content script running!');
+console.log('CONTENT SCRIPT LOADED');
 
-// ── Theme Application ──────────────────────────────────────────────────────
+let currentSettings = null;
 
-// Load saved settings and apply them
-chrome.storage.sync.get('bbTheme', (data) => {
-  const settings = data.bbTheme;
-  if (!settings) return;
-  applyTheme(settings);
-});
+// ── Load Saved Theme ──────────────────────────
+chrome.storage.sync.get(
+  'bbTheme',
+  (data) => {
 
+    const settings = data.bbTheme;
+
+    if (settings) {
+
+      currentSettings = settings;
+
+      applyTheme(settings);
+    }
+
+  }
+);
+
+// ── Listen For Popup Messages ─────────────────
+chrome.runtime.onMessage.addListener(
+  (msg) => {
+
+    console.log('MESSAGE RECEIVED:', msg);
+
+    // Apply live update
+    if (msg.type === 'BB_THEME_UPDATE') {
+
+      currentSettings = msg.settings;
+
+      applyTheme(msg.settings);
+    }
+
+    // Reset theme
+    if (msg.type === 'BB_THEME_RESET') {
+
+      const existing =
+        document.getElementById(
+          'bb-custom-theme'
+        );
+
+      if (existing) {
+        existing.remove();
+      }
+
+      currentSettings = null;
+    }
+
+  }
+);
+
+// ── Apply Theme Function ──────────────────────
 function applyTheme(settings) {
-  const existing = document.getElementById('bb-custom-theme');
-  if (existing) existing.remove();
 
+  if (!document.head) return;
+
+  // Remove old theme
+  const existing = document.getElementById('bb-custom-theme');
+
+  if (existing) {
+existing.remove();
+  }
+
+  // Create style tag
   const style = document.createElement('style');
+
   style.id = 'bb-custom-theme';
 
   style.textContent = `
 
-    /* ── Page background ── */
+    /* ── Main Backgrounds ── */
     body,
     #site-wrap,
     .inner-wrap,
     #main-content-inner,
-    .base-activity-dashboard-container,
-    .route-view-container {
-      background-color: ${settings.bgColor} !important;
-    }
-
-    /* ── Sidebar / nav drawer ── */
-    .MuiDrawerpaper-0-2-182,
-    .themed-background-primary-fill-only,
-    .themed-logo-background-primary-fill {
-      background-color: ${settings.bgColor} !important;
-    }
-
-    /* ── Nav item hover & active states ── */
-    .themed-background-primary-alt-fill-only:hover,
-    .makeStylesactive-0-2-740,
-    a.makeStylesactive-0-2-740 {
-      background-color: ${settings.accentColor} !important;
-    }
-
-    /* ── Page header bar ── */
     .base-header,
-    .commands_ac1f2108 {
-      background-color: ${settings.bgColor} !important;
+    .route-view-container,
+    .base-activity-dashboard-container {
+      background-color:
+        ${settings.bgColor} !important;
+
+      color:
+        ${settings.textColor} !important;
     }
 
-    /* ── Activity stream item cards (resting state) ── */
-    .stream-item-container,
-    .base-recent-activity .activity-group,
-    .base-recent-activity .activity-stream .activity-group
-      [bb-click-to-invoke-child] {
-      background-color: ${settings.bgColor} !important;
-    }
-
-    /* ── Activity stream item cards (hover state) ── */
-    .base-recent-activity .activity-stream .activity-group
-      [bb-click-to-invoke-child].child-is-invokable:hover {
-      background-color: ${settings.hoverColor} !important;
-    }
-
-    /* ── Footer ── */
-    [class*="makeStylesfooter"],
-    .footer_ac1f2108,
-    .footer_ec26d8ff {
-      background-color: ${settings.bgColor} !important;
-      border-top: 1px solid rgba(255,255,255,0.1) !important;
-    }
-
-    /* ── General text ── */
-    body, div, span, p, li,
-    h1, h2, h3, h4, h5, h6,
-    .MuiTypographyroot-0-2-700,
-    .headerText_ac1f2108,
-    .content_b6e07515, .timestamp, .due-date {
-      color: ${settings.textColor} !important;
+    /* ── Text ── */
+    body,
+    div,
+    span,
+    p,
+    li,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      color:
+        ${settings.textColor} !important;
     }
 
     /* ── Links ── */
-    a,
-    .root_519b8f72,
-    .MuiLinkroot-0-2-694,
-    .itemLink_1585b313 {
-      color: ${settings.accentColor} !important;
+    a {
+      color:
+        ${settings.accentColor} !important;
     }
 
-    /* ── Primary icons ── */
-    .MuiSvgIconcolorPrimary-0-2-25 {
-      color: ${settings.accentColor} !important;
+    /* ── Hover States ── */
+    button:hover,
+    a:hover,
+    [bb-click-to-invoke-child]:hover {
+      background-color:
+        ${settings.hoverColor} !important;
     }
 
-    /* ── Spinner ── */
-    .circle_3a27529b {
-      border-top-color: ${settings.accentColor} !important;
+    /* ── Buttons ── */
+    button {
+      border-color:
+        ${settings.accentColor} !important;
     }
 
-    /* ── Focus ring ── */
-    .fieldGroupIsFocused_7516d6cb,
-    .fieldGroupIsFocused_7516d6cb:focus,
-    .fieldGroupIsFocused_7516d6cb:hover {
-      border-color: ${settings.accentColor} !important;
-      box-shadow: inset 0 0 0 4px ${settings.accentColor}1a !important;
-    }
   `;
 
   document.head.appendChild(style);
+
+  console.log('THEME APPLIED');
+
 }
 
-// Single listener handles both update and reset
-chrome.runtime.onMessage.addListener((msg) => {
-  if (msg.type === 'BB_THEME_UPDATE') {
-    applyTheme(msg.settings);
+// ── Blackboard SPA Support ────────────────────
+const observer = new MutationObserver(() => {
+
+  if (currentSettings) {
+    applyTheme(currentSettings);
   }
 
-  if (msg.type === 'BB_THEME_RESET') {
-    const existing = document.getElementById('bb-custom-theme');
-    if (existing) existing.remove();
-  }
 });
+
+observer.observe(
+  document.documentElement,
+  {
+    childList: true,
+    subtree: true
+  }
+);

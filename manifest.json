@@ -1,10 +1,17 @@
 {
   "name": "Blackboard Custom Theme",
-  "description": "Customize Blackboard colors, fonts, and images",
+  "description": "Customize Blackboard colors live",
   "version": "1.0",
   "manifest_version": 3,
 
-  "permissions": ["storage", "tabs"],
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+
+  "host_permissions": [
+    "*://elearning.qu.edu.qa/*"
+  ],
 
   "action": {
     "default_popup": "popup.html"
@@ -14,8 +21,7 @@
     {
       "matches": ["*://elearning.qu.edu.qa/*"],
       "js": ["content.js"],
-      "run_at": "document_start",
-      "all_frames": true
+      "run_at": "document_idle"
     }
   ]
 }
