@@ -1,10 +1,21 @@
 {
-  "name": "Hello Extensions",
-  "description": "Base Level Extension",
+  "name": "Blackboard Custom Theme",
+  "description": "Customize Blackboard colors, fonts, and images",
   "version": "1.0",
   "manifest_version": 3,
+
+  "permissions": ["storage", "tabs"],
+
   "action": {
-    "default_popup": "hello.html",
-    "default_icon": "hello_extensions.png"
-  }
+    "default_popup": "popup.html"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["*://elearning.qu.edu.qa/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
 }
