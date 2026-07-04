@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bb Atelier</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="header">
+    <h1>Bb Atelier</h1>
+    <span class="subtitle">Blackboard Ultra</span>
+  </div>
+
+  <!-- ═══ 1. APPEARANCE ═══ -->
+  <div class="section">
+    <div class="section-label">Appearance</div>
+    <div class="radio-group">
+      <label class="radio-row">
+        <input type="radio" name="appearance" value="default" checked />
+        <span>☀️ Default</span>
+      </label>
+      <label class="radio-row">
+        <input type="radio" name="appearance" value="custom" />
+        <span>🎨 Custom Theme</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- ═══ 2. PRESETS ═══ -->
+  <div class="section" id="presetsSection">
+    <div class="section-label">Presets</div>
+
+    <!-- Light themes -->
+    <div class="preset-group-label">☀️ Light</div>
+    <div class="preset-grid" id="lightPresets"></div>
+
+    <!-- Dark themes -->
+    <div class="preset-group-label dark-label">🌙 Dark</div>
+    <div class="preset-grid" id="darkPresets"></div>
+  </div>
+
+  <!-- ═══ 3. CUSTOMIZE ═══ -->
+  <div class="section">
+    <div class="section-label">Customize</div>
+    <div class="color-row">
+      <label class="color-swatch">
+        <span class="swatch-label">Accent</span>
+        <input type="color" id="customAccent" value="#6366f1" />
+      </label>
+      <label class="color-swatch">
+        <span class="swatch-label">Background</span>
+        <input type="color" id="customBg" value="#121212" />
+      </label>
+      <label class="color-swatch">
+        <span class="swatch-label">Surface</span>
+        <input type="color" id="customSurface" value="#1E1E1E" />
+      </label>
+    </div>
+    <div class="font-row">
+      <span class="swatch-label">Font</span>
+      <select id="fontSelect">
+        <option value="Inter">Inter</option>
+        <option value="system-ui">System UI</option>
+        <option value="Segoe UI">Segoe UI</option>
+        <option value="Roboto">Roboto</option>
+        <option value="custom">📁 Upload Font...</option>
+      </select>
+      <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" style="display:none" />
+    </div>
+    <button class="btn primary" id="applyCustomBtn">Apply</button>
+  </div>
+
+  <!-- ═══ 4. SAVED ═══ -->
+  <div class="section">
+    <div class="section-label">Saved Themes</div>
+    <div id="savedList">
+      <div class="saved-empty">No saved themes yet</div>
+    </div>
+    <button class="btn secondary" id="saveCurrentBtn">💾 Save Current</button>
+  </div>
+
+  <!-- ═══ 5. COURSE COVERS ═══ -->
+  <div class="section">
+    <div class="section-label">Course Covers</div>
+    <select id="courseSelect">
+      <option value="">Select a course...</option>
+    </select>
+    <div id="courseCoverPreview" class="cover-preview">
+      <img id="coverImage" src="" alt="cover" />
+    </div>
+    <div class="cover-btns">
+      <button class="btn secondary" id="uploadCoverBtn">📁 Upload</button>
+      <button class="btn secondary danger" id="removeCoverBtn">🗑 Remove</button>
+    </div>
+    <input type="file" id="coverUpload" accept="image/*" style="display:none" />
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
