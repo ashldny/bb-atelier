@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=420" />
   <title>Bb Atelier</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -9,92 +10,111 @@
 
   <!-- ═══ HEADER ═══ -->
   <div class="header">
-    <h1>Bb Atelier</h1>
-    <span class="subtitle">Blackboard Ultra</span>
+    <h1>🎨 Bb Atelier</h1>
+    <span class="subtitle">Blackboard Ultra Theme Studio</span>
   </div>
 
-  <!-- ═══ 1. APPEARANCE ═══ -->
-  <div class="section">
-    <div class="section-label">Appearance</div>
-    <div class="radio-group">
-      <label class="radio-row">
-        <input type="radio" name="appearance" value="default" checked />
-        <span>☀️ Default</span>
+  <!-- ═══ TAB NAVBAR ═══ -->
+  <div class="tab-nav" role="tablist">
+    <button class="tab-btn active" data-tab="theme" role="tab" aria-selected="true" aria-controls="tab-theme">🎨 Theme</button>
+    <button class="tab-btn" data-tab="saved" role="tab" aria-selected="false" aria-controls="tab-saved">💾 Saved</button>
+    <button class="tab-btn" data-tab="covers" role="tab" aria-selected="false" aria-controls="tab-covers">🖼 Covers</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TAB: THEME
+       ═══════════════════════════════════════════════════════ -->
+  <div class="tab-content active" data-tab="theme" id="tab-theme" role="tabpanel">
+
+    <!-- ─── Appearance ─── -->
+    <div class="section">
+      <div class="section-label">Theme</div>
+      <div class="radio-group">
+        <label class="radio-row">
+          <input type="radio" name="appearance" value="default" checked />
+          <span>☀️ Default</span>
+        </label>
+        <label class="radio-row">
+          <input type="radio" name="appearance" value="custom" />
+          <span>🎨 Custom</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- ─── Color Pickers (only visible in Custom mode) ─── -->
+    <div class="section" id="colorSection">
+      <div class="section-label">Colors</div>
+
+      <label class="color-swatch">
+        <span class="swatch-label">Page Background</span>
+        <input type="color" id="pageBgPicker" value="#ffffff" />
       </label>
-      <label class="radio-row">
-        <input type="radio" name="appearance" value="custom" />
-        <span>🎨 Custom Theme</span>
+
+      <label class="color-swatch">
+        <span class="swatch-label">Accent / Brand Color</span>
+        <input type="color" id="activeTabGlowPicker" value="#a234b5" />
       </label>
+
+      <label class="color-swatch">
+        <span class="swatch-label">Navbar / Sidebar</span>
+        <input type="color" id="navbarPicker" value="#262626" />
+      </label>
+
+      <div class="info-row">
+        <span class="auto-label">🎯 Text colors are auto-derived from your page background</span>
+      </div>
+
+      <button class="btn primary" id="applyThemeBtn">Apply Theme</button>
+    </div>
+
+    <!-- ─── Font ─── -->
+    <div class="section">
+      <div class="section-label">Font</div>
+      <div class="font-row">
+        <select id="fontSelect">
+          <option value="Inter">Inter</option>
+          <option value="system-ui">System UI</option>
+          <option value="Segoe UI">Segoe UI</option>
+          <option value="Roboto">Roboto</option>
+          <option value="custom">📁 Upload Font...</option>
+        </select>
+        <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" style="display:none" />
+      </div>
     </div>
   </div>
 
-  <!-- ═══ 2. PRESETS ═══ -->
-  <div class="section" id="presetsSection">
-    <div class="section-label">Presets</div>
-
-    <!-- Light themes -->
-    <div class="preset-group-label">☀️ Light</div>
-    <div class="preset-grid" id="lightPresets"></div>
-
-    <!-- Dark themes -->
-    <div class="preset-group-label dark-label">🌙 Dark</div>
-    <div class="preset-grid" id="darkPresets"></div>
+  <!-- ═══════════════════════════════════════════════════════
+       TAB: SAVED
+       ═══════════════════════════════════════════════════════ -->
+  <div class="tab-content" data-tab="saved" id="tab-saved" role="tabpanel">
+    <div class="section">
+      <div class="section-label">Saved Themes</div>
+      <div id="savedList">
+        <div class="saved-empty">No saved themes yet~</div>
+      </div>
+      <button class="btn secondary" id="saveCurrentBtn">💾 Save Current Theme</button>
+    </div>
   </div>
 
-  <!-- ═══ 3. CUSTOMIZE ═══ -->
-  <div class="section">
-    <div class="section-label">Customize</div>
-    <div class="color-row">
-      <label class="color-swatch">
-        <span class="swatch-label">Accent</span>
-        <input type="color" id="customAccent" value="#6366f1" />
-      </label>
-      <label class="color-swatch">
-        <span class="swatch-label">Background</span>
-        <input type="color" id="customBg" value="#121212" />
-      </label>
-      <label class="color-swatch">
-        <span class="swatch-label">Surface</span>
-        <input type="color" id="customSurface" value="#1E1E1E" />
-      </label>
-    </div>
-    <div class="font-row">
-      <span class="swatch-label">Font</span>
-      <select id="fontSelect">
-        <option value="Inter">Inter</option>
-        <option value="system-ui">System UI</option>
-        <option value="Segoe UI">Segoe UI</option>
-        <option value="Roboto">Roboto</option>
-        <option value="custom">📁 Upload Font...</option>
+  <!-- ═══════════════════════════════════════════════════════
+       TAB: COVERS
+       ═══════════════════════════════════════════════════════ -->
+  <div class="tab-content" data-tab="covers" id="tab-covers" role="tabpanel">
+    <div class="section">
+      <div class="section-label">Course Covers</div>
+      <select id="courseSelect">
+        <option value="">Select a course...</option>
       </select>
-      <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" style="display:none" />
+      <div id="courseCoverPreview" class="cover-preview">
+        <span class="cover-placeholder">🖼 No cover set</span>
+        <img id="coverImage" src="" alt="Course cover preview" />
+      </div>
+      <div class="cover-btns">
+        <button class="btn secondary" id="uploadCoverBtn">📁 Upload Cover</button>
+        <button class="btn secondary danger" id="removeCoverBtn">🗑 Remove</button>
+      </div>
+      <input type="file" id="coverUpload" accept="image/*" style="display:none" />
     </div>
-    <button class="btn primary" id="applyCustomBtn">Apply</button>
-  </div>
-
-  <!-- ═══ 4. SAVED ═══ -->
-  <div class="section">
-    <div class="section-label">Saved Themes</div>
-    <div id="savedList">
-      <div class="saved-empty">No saved themes yet</div>
-    </div>
-    <button class="btn secondary" id="saveCurrentBtn">💾 Save Current</button>
-  </div>
-
-  <!-- ═══ 5. COURSE COVERS ═══ -->
-  <div class="section">
-    <div class="section-label">Course Covers</div>
-    <select id="courseSelect">
-      <option value="">Select a course...</option>
-    </select>
-    <div id="courseCoverPreview" class="cover-preview">
-      <img id="coverImage" src="" alt="cover" />
-    </div>
-    <div class="cover-btns">
-      <button class="btn secondary" id="uploadCoverBtn">📁 Upload</button>
-      <button class="btn secondary danger" id="removeCoverBtn">🗑 Remove</button>
-    </div>
-    <input type="file" id="coverUpload" accept="image/*" style="display:none" />
   </div>
 
   <script src="popup.js"></script>
