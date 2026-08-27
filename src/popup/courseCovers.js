@@ -3,6 +3,8 @@
 //  Upload, preview, and remove course banner images
 // ═════════════════════════════════════════════════════════
 
+import { escapeHtml, MAX_IMAGE_SIZE, validateFileSize } from '../utils/sanitization.js';
+
 /**
  * Initialize the Course Covers tab
  */
@@ -11,11 +13,15 @@ export function initCourseCovers() {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (!tabs[0]?.id) return;
     chrome.tabs.sendMessage(tabs[0].id, { action: 'getCourses' }, (courses) => {
+      if (chrome.runtime.lastError) return;
       if (!courses || !Array.isArray(courses)) return;
       const select = document.getElementById('courseSelect');
       select.innerHTML = '<option value="">Select a course...</option>';
       courses.forEach((c) => {
-        select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        select.appendChild(opt);
       });
     });
   });
@@ -34,7 +40,9 @@ export function initCourseCovers() {
       if (imageUrl) {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (!tabs[0]?.id) return;
-          chrome.tabs.sendMessage(tabs[0].id, { action: 'applyCourseCover', courseId, imageUrl }).catch(() => {});
+          chrome.tabs.sendMessage(tabs[0].id, { action: 'applyCourseCover', courseId, imageUrl }, () => {
+          if (chrome.runtime.lastError) return;
+        });
         });
       }
     });
@@ -49,6 +57,11 @@ export function initCourseCovers() {
   document.getElementById('coverUpload').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (!validateFileSize(file.size, MAX_IMAGE_SIZE)) {
+      alert('Image too large. Maximum size is 2MB.');
+      e.target.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target.result;
@@ -78,7 +91,9 @@ export function initCourseCovers() {
         document.getElementById('courseCoverPreview').classList.remove('has-image');
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (!tabs[0]?.id) return;
-          chrome.tabs.sendMessage(tabs[0].id, { action: 'resetCourseCover', courseId }).catch(() => {});
+          chrome.tabs.sendMessage(tabs[0].id, { action: 'resetCourseCover', courseId }, () => {
+          if (chrome.runtime.lastError) return;
+        });
         });
       });
     });
@@ -91,17 +106,21 @@ export function initCourseCovers() {
  * @param {string} imgData - Data URL of the image
  */
 function saveCover(courseId, imgData) {
+  document.getElementById('coverImage').src = imgData;
+  document.getElementById('courseCoverPreview').classList.add('has-image');
+
   chrome.storage.local.get(['courseCovers'], (data) => {
     const covers = data.courseCovers || {};
     covers[courseId] = imgData;
     chrome.storage.local.set({ courseCovers: covers }, () => {
-      chrome.storage.sync.set({ courseCovers: covers }, () => {});
+      chrome.storage.sync.set({ courseCovers: covers }, () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (!tabs[0]?.id) return;
+          chrome.tabs.sendMessage(tabs[0].id, { action: 'applyCourseCover', courseId, imageUrl: imgData }, () => {
+          if (chrome.runtime.lastError) return;
+        });
+        });
+      });
     });
-  });
-  document.getElementById('coverImage').src = imgData;
-  document.getElementById('courseCoverPreview').classList.add('has-image');
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs[0]?.id) return;
-    chrome.tabs.sendMessage(tabs[0].id, { action: 'applyCourseCover', courseId, imageUrl: imgData }).catch(() => {});
   });
 }

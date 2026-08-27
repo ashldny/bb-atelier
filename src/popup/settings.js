@@ -42,7 +42,8 @@ export function loadSettings() {
 
       // Restore active tab
       if (data.activeTab) {
-        const tabBtn = document.querySelector(`.tab-btn[data-tab="${data.activeTab}"]`);
+        const safeTab = String(data.activeTab).replace(/[^a-zA-Z0-9_-]/g, '');
+        const tabBtn = document.querySelector(`.tab-btn[data-tab="${safeTab}"]`);
         if (tabBtn) tabBtn.click();
       }
     },

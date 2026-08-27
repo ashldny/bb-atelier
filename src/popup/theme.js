@@ -5,10 +5,8 @@
 
 import { derivePalette } from '../theme/palette.js';
 import { applyThemeToBb, resetThemeOnBb, applyFont } from '../messaging/themeMessaging.js';
-
-const DEFAULT_BG = '#ffffff';
-const DEFAULT_ACCENT = '#a234b5';
-const DEFAULT_NAVBAR = '#262626';
+import { MAX_FONT_SIZE, validateFileSize } from '../utils/sanitization.js';
+import { DEFAULT_BG, DEFAULT_ACCENT, DEFAULT_NAVBAR } from '../utils/constants.js';
 
 /**
  * Initialize the Theme tab UI (colour pickers, appearance toggle, font, apply button)
@@ -49,6 +47,11 @@ export function initTheme() {
   document.getElementById('fontUpload').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (!validateFileSize(file.size, MAX_FONT_SIZE)) {
+      alert('Font file too large. Maximum size is 512KB.');
+      e.target.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target.result;

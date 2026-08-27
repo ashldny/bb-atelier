@@ -6,6 +6,16 @@ function dbg(...args) {
   if (BB_DEBUG) console.log('[BbTheme]', ...args);
 }
 
+function sanitizeUrl(url) {
+  const s = String(url).trim();
+  if (s.startsWith('data:')) return s;
+  try {
+    const u = new URL(s);
+    if (u.protocol === 'http:' || u.protocol === 'https:') return s;
+  } catch {}
+  return '';
+}
+
 // ─── Inject CSS ───────────────────────────────────────────
 function injectCSS(css) {
   const old = document.getElementById('bb-custom-theme');
@@ -18,21 +28,16 @@ function injectCSS(css) {
 }
 
 let cssWatcher = null;
-let burstTimer = null;
 
 function startCSSWatcher(css) {
   if (cssWatcher) cssWatcher.disconnect();
   
-  // Watch for any DOM changes — if BB adds/updates styles, re-inject ours at the end
   cssWatcher = new MutationObserver(() => {
     const ourStyle = document.getElementById('bb-custom-theme');
     if (!ourStyle) {
-      // Our style was removed — re-inject entirely
       injectCSS(css);
       return;
     }
-    // Move our style to the very end of <head> so it always wins
-    // (BB might add new <style> after ours)
     if (document.head && document.head.lastElementChild !== ourStyle) {
       document.head.appendChild(ourStyle);
     }
@@ -43,33 +48,9 @@ function startCSSWatcher(css) {
     attributes: false,
     characterData: false,
   });
-
-  // Also run a short burst of re-injections to beat async CSS
-  if (burstTimer) clearTimeout(burstTimer);
-  let attempts = 0;
-  const maxAttempts = 8;
-  const burstInject = () => {
-    const ourStyle = document.getElementById('bb-custom-theme');
-    if (ourStyle && document.head) {
-      document.head.appendChild(ourStyle); // ensure it's last
-    } else {
-      injectCSS(css); // re-inject if missing
-    }
-    attempts++;
-    if (attempts < maxAttempts) {
-      burstTimer = setTimeout(burstInject, 400);
-    } else {
-      burstTimer = null;
-    }
-  };
-  burstTimer = setTimeout(burstInject, 600);
 }
 
 function resetTheme() {
-  if (burstTimer) {
-    clearTimeout(burstTimer);
-    burstTimer = null;
-  }
   ['bb-custom-theme', 'bb-font-style'].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.remove();
@@ -77,10 +58,6 @@ function resetTheme() {
   if (cssWatcher) {
     cssWatcher.disconnect();
     cssWatcher = null;
-  }
-  if (coverWatchInterval) {
-    clearInterval(coverWatchInterval);
-    coverWatchInterval = null;
   }
   chrome.storage.local.remove('cachedCSS');
 }
@@ -94,9 +71,12 @@ function applySystemFont(font) {
   const s = document.createElement('style');
   s.id = id;
   if (font.startsWith('data:')) {
-    s.textContent = `@font-face{font-family:'CustomFont';src:url(${font}) format('truetype');}body,*{font-family:'CustomFont',sans-serif!important;}`;
+    const safeUrl = sanitizeUrl(font);
+    if (!safeUrl) return;
+    s.textContent = `@font-face{font-family:'CustomFont';src:url('${safeUrl}') format('truetype');}body,*{font-family:'CustomFont',sans-serif!important;}`;
   } else {
-    s.textContent = `body,*{font-family:"${font}",sans-serif!important;}`;
+    const safeFont = font.replace(/["'\\]/g, '');
+    s.textContent = `body,*{font-family:"${safeFont}",sans-serif!important;}`;
   }
   document.head.appendChild(s);
 }
@@ -115,8 +95,10 @@ function loadAndApply() {
 //  Course Covers
 // ═════════════════════════════════════════════════════════
 let courseBannerMap = {};
-const coverStyleMap = {};
 let coversCache = {};
+
+const COURSE_ID_REGEX = /courses[\\/]_(\d+_\d+)/;
+const ULTRA_COURSE_REGEX = /ultra\/course[\\/](\d+)/;
 
 function getCourseIdFromCard(card) {
   if (!card) return null;
@@ -128,7 +110,7 @@ function getCourseIdFromCard(card) {
   const link = card.querySelector('a[href*="ultra/course"], a[href*="courses/"]');
   if (link) {
     const href = link.getAttribute('href') || '';
-    const m = href.match(/courses[\\/]_(\d+_\d+)/) || href.match(/ultra\/course[\\/](\d+)/);
+    const m = href.match(COURSE_ID_REGEX) || href.match(ULTRA_COURSE_REGEX);
     if (m) return m[1];
   }
   return null;
@@ -186,6 +168,9 @@ function getCourseBannerElements(courseId) {
 function applyCourseCover(courseId, imageUrl) {
   dbg(`applyCourseCover(${courseId})`);
 
+  const safeImageUrl = sanitizeUrl(imageUrl);
+  const safeCourseId = String(courseId).replace(/[^a-zA-Z0-9_-]/g, '');
+
   const banners = getCourseBannerElements(courseId);
 
   if (banners.length === 0) {
@@ -207,37 +192,38 @@ function applyCourseCover(courseId, imageUrl) {
     return 0;
   }
 
+  if (!safeImageUrl) return 0;
+
   banners.forEach((el) => {
-    const styleId = `bb-cover-style-${courseId}`;
+    const styleId = `bb-cover-style-${safeCourseId}`;
     const oldStyle = document.getElementById(styleId);
     if (oldStyle) oldStyle.remove();
-    coverStyleMap[courseId] = styleId;
 
-    el.setAttribute('data-bb-cover', courseId);
+    el.setAttribute('data-bb-cover', safeCourseId);
 
     const s = document.createElement('style');
     s.id = styleId;
     s.textContent = `
-      .course-banner[data-bb-cover="${courseId}"] {
-        background: url('${imageUrl}') center / cover no-repeat !important;
-        background-image: url('${imageUrl}') !important;
+      .course-banner[data-bb-cover="${safeCourseId}"] {
+        background: url('${safeImageUrl}') center / cover no-repeat !important;
+        background-image: url('${safeImageUrl}') !important;
         background-repeat: no-repeat !important;
         background-size: cover !important;
         background-position: center !important;
         background-color: transparent !important;
       }
-      .course-banner[data-bb-cover="${courseId}"] img {
+      .course-banner[data-bb-cover="${safeCourseId}"] img {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
       }
-      .course-banner[data-bb-cover="${courseId}"]::before,
-      .course-banner[data-bb-cover="${courseId}"]::after {
+      .course-banner[data-bb-cover="${safeCourseId}"]::before,
+      .course-banner[data-bb-cover="${safeCourseId}"]::after {
         background: none !important;
         background-image: none !important;
         content: none !important;
       }
-      .course-banner[data-bb-cover="${courseId}"] > * {
+      .course-banner[data-bb-cover="${safeCourseId}"] > * {
         background: none !important;
         background-image: none !important;
       }
@@ -245,8 +231,8 @@ function applyCourseCover(courseId, imageUrl) {
     document.head.appendChild(s);
 
     el.setAttribute('style',
-      `background: url('${imageUrl}') center / cover no-repeat !important; ` +
-      `background-image: url('${imageUrl}') !important; ` +
+      `background: url('${safeImageUrl}') center / cover no-repeat !important; ` +
+      `background-image: url('${safeImageUrl}') !important; ` +
       `background-repeat: no-repeat !important; ` +
       `background-size: cover !important; ` +
       `background-position: center !important; ` +
@@ -280,21 +266,24 @@ function restoreAllCovers() {
     }
   });
 
-  const urlMatch = window.location.href.match(/ultra\/course[\\/]_(\d+_\d+)/);
+  const urlMatch = window.location.href.match(ULTRA_COURSE_REGEX);
   if (urlMatch) {
     const courseIdFromUrl = urlMatch[1];
     if (coversCache[courseIdFromUrl] && applied === 0) {
       dbg(`⚠ URL matched course ${courseIdFromUrl} but no banner found — trying inside-course banners`);
-      document.querySelectorAll('[class*="banner"], [class*="header"]').forEach((el) => {
-        if (el.getBoundingClientRect().width > 100 && el.getBoundingClientRect().height > 50) {
-          el.setAttribute('data-bb-cover', courseIdFromUrl);
-          el.setAttribute('style',
-            `background: url('${coversCache[courseIdFromUrl]}') center / cover no-repeat !important; ` +
-            `background-image: url('${coversCache[courseIdFromUrl]}') !important;`
-          );
-          applied++;
-        }
-      });
+      const safeUrl = sanitizeUrl(coversCache[courseIdFromUrl]);
+      if (safeUrl) {
+        document.querySelectorAll('[class*="banner"], [class*="header"]').forEach((el) => {
+          if (el.getBoundingClientRect().width > 100 && el.getBoundingClientRect().height > 50) {
+            el.setAttribute('data-bb-cover', courseIdFromUrl);
+            el.setAttribute('style',
+              `background: url('${safeUrl}') center / cover no-repeat !important; ` +
+              `background-image: url('${safeUrl}') !important;`
+            );
+            applied++;
+          }
+        });
+      }
     }
   }
 
@@ -363,8 +352,6 @@ function restoreCourseCovers() {
   });
 }
 
-let coverWatchInterval = null;
-
 function setupCoverWatch() {
   const mo = new MutationObserver((mutations) => {
     const hasBannerChange = mutations.some(m =>
@@ -386,17 +373,6 @@ function setupCoverWatch() {
   if (document.documentElement) {
     mo.observe(document.documentElement, { childList: true, subtree: true });
   }
-
-  coverWatchInterval = setInterval(() => {
-    const missing = document.querySelectorAll('.course-banner:not([data-bb-cover])');
-    if (missing.length === 0) return;
-
-    const courseIds = Object.keys(coversCache);
-    if (courseIds.length === 0) return;
-
-    dbg(`⏰ Interval: ${missing.length} banners missing covers — restoring`);
-    restoreAllCovers();
-  }, 1500);
 }
 
 // ═════════════════════════════════════════════════════════
@@ -437,86 +413,89 @@ if (document.readyState === 'loading') {
   initialize();
 }
 
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    loadCoversFromStorage(() => {
-      dbg('🔄 Late load re-apply');
-      restoreAllCovers();
-    });
-  }, 3000);
-});
-
 // ─── Message Listener ─────────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  // ─── Apply theme (CSS string from popup) ───
-  if (msg.action === 'applyThemeCSS') {
-    injectCSS(msg.css);
-    startCSSWatcher(msg.css);
-    chrome.storage.local.set({ cachedCSS: msg.css });
-  }
+  try {
+    // ─── Apply theme (CSS string from popup) ───
+    if (msg.action === 'applyThemeCSS') {
+      injectCSS(msg.css);
+      startCSSWatcher(msg.css);
+      chrome.storage.local.set({ cachedCSS: msg.css });
+      return false;
+    }
 
-  // ─── Reset theme ───
-  if (msg.action === 'resetTheme') {
-    resetTheme();
-  }
+    // ─── Reset theme ───
+    if (msg.action === 'resetTheme') {
+      resetTheme();
+      return false;
+    }
 
-  // ─── Apply font ───
-  if (msg.action === 'applyFont') {
-    applySystemFont(msg.font);
-  }
+    // ─── Apply font ───
+    if (msg.action === 'applyFont') {
+      applySystemFont(msg.font);
+      return false;
+    }
 
-  // ─── Scrape course names ───
-  if (msg.action === 'getCourses') {
-    sendResponse(scrapeCourses());
-    return true;
-  }
+    // ─── Scrape course names ───
+    if (msg.action === 'getCourses') {
+      sendResponse(scrapeCourses());
+      return true;
+    }
 
-  // ─── Apply course cover ───
-  if (msg.action === 'applyCourseCover') {
-    coversCache[msg.courseId] = msg.imageUrl;
-    applyCourseCover(msg.courseId, msg.imageUrl);
-    chrome.storage.local.get(['courseCovers'], (data) => {
-      const covers = data.courseCovers || {};
-      covers[msg.courseId] = msg.imageUrl;
-      chrome.storage.local.set({ courseCovers: covers });
-    });
-    sendResponse({ success: true });
-    return true;
-  }
+    // ─── Apply course cover ───
+    if (msg.action === 'applyCourseCover') {
+      if (!msg.courseId || !msg.imageUrl) {
+        sendResponse({ success: false, error: 'Missing courseId or imageUrl' });
+        return true;
+      }
+      coversCache[msg.courseId] = msg.imageUrl;
+      applyCourseCover(msg.courseId, msg.imageUrl);
+      chrome.storage.local.get(['courseCovers'], (data) => {
+        const covers = data.courseCovers || {};
+        covers[msg.courseId] = msg.imageUrl;
+        chrome.storage.local.set({ courseCovers: covers });
+      });
+      sendResponse({ success: true });
+      return true;
+    }
 
-  // ─── Reset course cover ───
-  if (msg.action === 'resetCourseCover') {
-    delete coversCache[msg.courseId];
-    const styleId = coverStyleMap[msg.courseId];
-    if (styleId) {
+    // ─── Reset course cover ───
+    if (msg.action === 'resetCourseCover') {
+      if (!msg.courseId) {
+        sendResponse({ success: false, error: 'Missing courseId' });
+        return true;
+      }
+      delete coversCache[msg.courseId];
+      const styleId = `bb-cover-style-${msg.courseId}`;
       const styleEl = document.getElementById(styleId);
-      if (styleEl) {
-        styleEl.remove();
-        delete coverStyleMap[msg.courseId];
-      }
-    }
-    const mapped = courseBannerMap[msg.courseId];
-    if (mapped && document.contains(mapped)) {
-      mapped.removeAttribute('style');
-      mapped.removeAttribute('data-bb-cover');
-    }
-    document.querySelectorAll('.course-banner').forEach((banner) => {
-      const card = banner.closest('.element-card, [class*="course-element"], [class*="course-card"], article');
-      if (!card) return;
-      const id = getCourseIdFromCard(card);
-      if (id === msg.courseId) {
-        banner.removeAttribute('style');
-        banner.removeAttribute('data-bb-cover');
-      }
-    });
-    chrome.storage.local.get(['courseCovers'], (data) => {
-      const covers = data.courseCovers || {};
-      delete covers[msg.courseId];
-      chrome.storage.local.set({ courseCovers: covers });
-    });
-    sendResponse({ success: true });
-    return true;
-  }
+      if (styleEl) styleEl.remove();
 
-  return true;
+      const mapped = courseBannerMap[msg.courseId];
+      if (mapped && document.contains(mapped)) {
+        mapped.removeAttribute('style');
+        mapped.removeAttribute('data-bb-cover');
+      }
+      document.querySelectorAll('.course-banner').forEach((banner) => {
+        const card = banner.closest('.element-card, [class*="course-element"], [class*="course-card"], article');
+        if (!card) return;
+        const id = getCourseIdFromCard(card);
+        if (id === msg.courseId) {
+          banner.removeAttribute('style');
+          banner.removeAttribute('data-bb-cover');
+        }
+      });
+      chrome.storage.local.get(['courseCovers'], (data) => {
+        const covers = data.courseCovers || {};
+        delete covers[msg.courseId];
+        chrome.storage.local.set({ courseCovers: covers });
+      });
+      sendResponse({ success: true });
+      return true;
+    }
+
+    return false;
+  } catch (err) {
+    console.error('[BbTheme] Message handler error:', err);
+    return false;
+  }
 });

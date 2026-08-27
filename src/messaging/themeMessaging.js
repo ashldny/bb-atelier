@@ -5,6 +5,15 @@
 
 import { buildFullThemeCss } from '../theme/cssBuilder.js';
 
+function logError(action, err) {
+  if (chrome.runtime.lastError) {
+    console.warn(`[BbTheme] ${action}:`, chrome.runtime.lastError.message);
+  }
+  if (err) {
+    console.warn(`[BbTheme] ${action}:`, err.message || err);
+  }
+}
+
 /**
  * Send a full theme CSS to the active Blackboard tab
  * @param {object} overrides
@@ -18,7 +27,9 @@ export function applyThemeToBb(overrides, darkOverrides, staticVars) {
     chrome.tabs.sendMessage(tabs[0].id, {
       action: 'applyThemeCSS',
       css: css,
-    }).catch(() => {});
+    }, () => {
+      logError('applyThemeCSS');
+    });
   });
 }
 
@@ -28,7 +39,9 @@ export function applyThemeToBb(overrides, darkOverrides, staticVars) {
 export function resetThemeOnBb() {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (!tabs[0]?.id) return;
-    chrome.tabs.sendMessage(tabs[0].id, { action: 'resetTheme' }).catch(() => {});
+    chrome.tabs.sendMessage(tabs[0].id, { action: 'resetTheme' }, () => {
+      logError('resetTheme');
+    });
   });
 }
 
@@ -42,6 +55,8 @@ export function applyFont(font) {
     chrome.tabs.sendMessage(tabs[0].id, {
       action: 'applyFont',
       font: font,
-    }).catch(() => {});
+    }, () => {
+      logError('applyFont');
+    });
   });
 }

@@ -5,10 +5,8 @@
 
 import { derivePalette } from '../theme/palette.js';
 import { applyThemeToBb } from '../messaging/themeMessaging.js';
-
-const DEFAULT_BG = '#ffffff';
-const DEFAULT_ACCENT = '#a234b5';
-const DEFAULT_NAVBAR = '#262626';
+import { escapeHtml } from '../utils/sanitization.js';
+import { DEFAULT_BG, DEFAULT_ACCENT, DEFAULT_NAVBAR } from '../utils/constants.js';
 
 /**
  * Initialize the Saved Themes tab
@@ -52,13 +50,14 @@ export function renderSaved() {
       const t = themes[name];
       const bg = t.pageBg || DEFAULT_BG;
       const accent = t.accent || DEFAULT_ACCENT;
+      const safeName = escapeHtml(name);
       return `
-        <div class="saved-row" data-name="${name}">
+        <div class="saved-row" data-name="${safeName}">
           <span class="saved-swatches">
             <span class="mini-swatch" style="background:${bg}"></span>
             <span class="mini-swatch" style="background:${accent}"></span>
           </span>
-          <span class="saved-name">${name}</span>
+          <span class="saved-name">${safeName}</span>
           <button class="btn tiny load-saved" title="Load theme">▶</button>
           <button class="btn tiny danger delete-saved" title="Delete">✕</button>
         </div>

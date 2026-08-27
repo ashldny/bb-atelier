@@ -8,11 +8,16 @@
  * @returns {{r: number, g: number, b: number}}
  */
 export function hexToRgb(hex) {
-  const h = hex.replace('#', '');
+  const h = String(hex).replace('#', '');
+  const cleaned = h.length === 3
+    ? h[0] + h[0] + h[1] + h[1] + h[2] + h[2]
+    : h.substring(0, 6);
+  const n = parseInt(cleaned, 16);
+  if (isNaN(n)) return { r: 0, g: 0, b: 0 };
   return {
-    r: parseInt(h.substring(0, 2), 16),
-    g: parseInt(h.substring(2, 4), 16),
-    b: parseInt(h.substring(4, 6), 16),
+    r: (n >> 16) & 255,
+    g: (n >> 8) & 255,
+    b: n & 255,
   };
 }
 
