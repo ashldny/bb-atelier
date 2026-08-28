@@ -146,6 +146,75 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
 .MuiSvgIcon-root path:not([fill="none"]) {
   fill: currentColor !important;
 }
+
+/* ─── Header icons — hardcoded black on dark backgrounds ─── */
+.base-header .svg-icon svg,
+.base-header .svg-icon svg use,
+.base-header bb-svg-icon svg,
+.base-header bb-svg-icon svg use {
+  fill: var(--palette-primary-contrastText, #ffffff) !important;
+  stroke: var(--palette-primary-contrastText, #ffffff) !important;
+}
+
+/* Settings / gear icon in header */
+.base-header-tools svg,
+.base-header-tools svg use {
+  fill: var(--palette-primary-contrastText, #ffffff) !important;
+  stroke: var(--palette-primary-contrastText, #ffffff) !important;
+}
+
+/* Menu toggle hamburger icon */
+.menu-toggle svg,
+.menu-toggle svg path {
+  fill: var(--palette-primary-contrastText, #ffffff) !important;
+  stroke: var(--palette-primary-contrastText, #ffffff) !important;
+}
+
+/* General header interactive elements — ensure contrast */
+.base-header a,
+.base-header button {
+  color: var(--palette-primary-contrastText, #ffffff) !important;
+}
+
+/* ─── Sidebar / navigation panel ─── */
+.navigation-sidebar,
+.bb-sidebar,
+[class*="sidebar"] {
+  background-color: var(--palette-background-b8, #1a1a1a) !important;
+}
+
+/* ─── Dropdown menus ─── */
+.menu-content,
+.dropdown-menu,
+.bb-menu-content,
+[class*="dropdown"] {
+  background-color: var(--palette-background-paper, #ffffff) !important;
+  color: var(--palette-text-primary, #262626) !important;
+}
+
+/* ─── Modal / dialog overlays ─── */
+.modal-dialog,
+.dialog-container,
+.bb-modal,
+[class*="modal"] {
+  background-color: var(--palette-background-paper, #ffffff) !important;
+  color: var(--palette-text-primary, #262626) !important;
+}
+
+/* ─── Course card hover states ─── */
+.element-card:hover,
+.course-card:hover,
+[class*="course-element"]:hover {
+  background-color: var(--palette-action-hover, rgba(0,0,0,0.04)) !important;
+}
+
+/* ─── Tooltips ─── */
+.tooltip,
+.bb-tooltip,
+[class*="tooltip"] {
+  background-color: var(--palette-background-b10, #000000) !important;
+  color: var(--palette-text-primary, #ffffff) !important;
+}
 `);
 
   return lines.join('\n');
