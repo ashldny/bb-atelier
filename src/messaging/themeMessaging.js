@@ -5,13 +5,11 @@
 
 import { buildFullThemeCss } from '../theme/cssBuilder.js';
 
-function logError(action, err) {
-  if (chrome.runtime.lastError) {
-    console.warn(`[BbTheme] ${action}:`, chrome.runtime.lastError.message);
-  }
-  if (err) {
-    console.warn(`[BbTheme] ${action}:`, err.message || err);
-  }
+function sendToTab(message) {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (!tabs[0]?.id) return;
+    chrome.tabs.sendMessage(tabs[0].id, message).catch(() => {});
+  });
 }
 
 /**
@@ -22,27 +20,32 @@ function logError(action, err) {
  */
 export function applyThemeToBb(overrides, darkOverrides, staticVars) {
   const css = buildFullThemeCss(overrides, darkOverrides, staticVars);
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs[0]?.id) return;
-    chrome.tabs.sendMessage(tabs[0].id, {
-      action: 'applyThemeCSS',
-      css: css,
-    }, () => {
-      logError('applyThemeCSS');
-    });
-  });
+  sendToTab({ action: 'applyThemeCSS', css });
+}
+
+/**
+ * Preview a theme on the active Blackboard tab (temporary, not saved to storage)
+ * @param {object} overrides
+ * @param {object} darkOverrides
+ * @param {string} staticVars
+ */
+export function previewThemeOnBb(overrides, darkOverrides, staticVars) {
+  const css = buildFullThemeCss(overrides, darkOverrides, staticVars);
+  sendToTab({ action: 'previewThemeCSS', css });
+}
+
+/**
+ * Restore theme from storage after preview ends
+ */
+export function restoreThemeOnBb() {
+  sendToTab({ action: 'restoreTheme' });
 }
 
 /**
  * Reset theme on the active Blackboard tab (back to default)
  */
 export function resetThemeOnBb() {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs[0]?.id) return;
-    chrome.tabs.sendMessage(tabs[0].id, { action: 'resetTheme' }, () => {
-      logError('resetTheme');
-    });
-  });
+  sendToTab({ action: 'resetTheme' });
 }
 
 /**
@@ -50,13 +53,5 @@ export function resetThemeOnBb() {
  * @param {string} font - Font name or data URL
  */
 export function applyFont(font) {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs[0]?.id) return;
-    chrome.tabs.sendMessage(tabs[0].id, {
-      action: 'applyFont',
-      font: font,
-    }, () => {
-      logError('applyFont');
-    });
-  });
+  sendToTab({ action: 'applyFont', font });
 }

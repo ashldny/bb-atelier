@@ -10,8 +10,16 @@
 
   <!-- ═══ HEADER ═══ -->
   <div class="header">
-    <h1>🎨 Bb Atelier</h1>
-    <span class="subtitle">Blackboard Ultra Theme Studio</span>
+    <div class="header-row">
+      <div class="header-text">
+        <h1>🎨 Bb Atelier</h1>
+        <span class="subtitle">Blackboard Ultra Theme Studio</span>
+      </div>
+      <label class="toggle-label master-toggle" title="Enable / disable all customization">
+        <input type="checkbox" id="masterToggle" checked />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
   </div>
 
   <!-- ═══ TAB NAVBAR ═══ -->
@@ -25,6 +33,12 @@
        TAB: THEME
        ═══════════════════════════════════════════════════════ -->
   <div class="tab-content active" data-tab="theme" id="tab-theme" role="tabpanel">
+
+    <!-- ─── Presets ─── -->
+    <div class="section">
+      <div class="section-label">Presets</div>
+      <div id="presetGrid" class="preset-grid"></div>
+    </div>
 
     <!-- ─── Appearance ─── -->
     <div class="section">
@@ -92,7 +106,12 @@
       <div id="savedList">
         <div class="saved-empty">No saved themes yet~</div>
       </div>
-      <button class="btn secondary" id="saveCurrentBtn">💾 Save Current Theme</button>
+      <div class="saved-btns">
+        <button class="btn secondary" id="saveCurrentBtn">💾 Save Current Theme</button>
+        <button class="btn secondary" id="exportThemesBtn">📤 Export</button>
+        <button class="btn secondary" id="importThemesBtn">📥 Import</button>
+        <input type="file" id="importThemesFile" accept=".json" style="display:none" />
+      </div>
     </div>
   </div>
 
@@ -108,12 +127,36 @@
       <div id="courseCoverPreview" class="cover-preview">
         <span class="cover-placeholder">🖼 No cover set</span>
         <img id="coverImage" src="" alt="Course cover preview" />
+        <div id="coverFocal" class="cover-focal" title="Drag to adjust position"></div>
+      </div>
+      <div id="coverHint" class="cover-hint" style="display:none">Drag the circle on the preview to adjust which area shows as the cover</div>
+      <div id="coverPositionControls" class="cover-position-row" style="display:none">
+        <span class="cover-position-label">Position: <span id="coverPositionText">50% 50%</span></span>
+        <button class="btn tiny" id="resetPositionBtn">Reset</button>
       </div>
       <div class="cover-btns">
         <button class="btn secondary" id="uploadCoverBtn">📁 Upload Cover</button>
+        <button class="btn secondary" id="coverUrlBtn">🔗 From URL</button>
         <button class="btn secondary danger" id="removeCoverBtn">🗑 Remove</button>
       </div>
+      <div id="coverUrlInput" class="cover-url-row" style="display:none">
+        <input type="url" id="coverUrlField" class="cover-url-field" placeholder="https://example.com/image.jpg" />
+        <button class="btn tiny" id="coverUrlApply">Apply</button>
+        <button class="btn tiny" id="coverUrlCancel">✕</button>
+      </div>
       <input type="file" id="coverUpload" accept="image/*" style="display:none" />
+    </div>
+
+    <!-- ─── Image Library ─── -->
+    <div class="section">
+      <div class="section-label">Image Library</div>
+      <div id="libraryGrid" class="library-grid"></div>
+      <div class="cover-btns">
+        <button class="btn secondary" id="uploadLibraryBtn">📁 Upload to Library</button>
+        <button class="btn tiny danger" id="clearLibraryBtn">Clear All</button>
+        <input type="file" id="libraryUpload" accept="image/*" multiple style="display:none" />
+      </div>
+      <div class="library-hint" id="libraryHint" style="display:none">Select a course above, then click an image to assign it as the cover</div>
     </div>
   </div>
 
