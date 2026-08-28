@@ -75,7 +75,7 @@ function applySystemFont(font) {
     if (!safeUrl) return;
     s.textContent = `@font-face{font-family:'CustomFont';src:url('${safeUrl}') format('truetype');}body,*{font-family:'CustomFont',sans-serif!important;}`;
   } else {
-    const safeFont = font.replace(/["'\\]/g, '');
+    const safeFont = font.replace(/[^a-zA-Z0-9\s\-]/g, '');
     s.textContent = `body,*{font-family:"${safeFont}",sans-serif!important;}`;
   }
   document.head.appendChild(s);
@@ -165,11 +165,12 @@ function getCourseBannerElements(courseId) {
   return results;
 }
 
-function applyCourseCover(courseId, imageUrl) {
+function applyCourseCover(courseId, imageUrl, position) {
   dbg(`applyCourseCover(${courseId})`);
 
   const safeImageUrl = sanitizeUrl(imageUrl);
   const safeCourseId = String(courseId).replace(/[^a-zA-Z0-9_-]/g, '');
+  const safePosition = String(position || '50% 50%').replace(/[^0-9.%\s]/g, '');
 
   const banners = getCourseBannerElements(courseId);
 
@@ -205,11 +206,11 @@ function applyCourseCover(courseId, imageUrl) {
     s.id = styleId;
     s.textContent = `
       .course-banner[data-bb-cover="${safeCourseId}"] {
-        background: url('${safeImageUrl}') center / cover no-repeat !important;
+        background: url('${safeImageUrl}') ${safePosition} / cover no-repeat !important;
         background-image: url('${safeImageUrl}') !important;
         background-repeat: no-repeat !important;
         background-size: cover !important;
-        background-position: center !important;
+        background-position: ${safePosition} !important;
         background-color: transparent !important;
       }
       .course-banner[data-bb-cover="${safeCourseId}"] img {
@@ -231,11 +232,11 @@ function applyCourseCover(courseId, imageUrl) {
     document.head.appendChild(s);
 
     el.setAttribute('style',
-      `background: url('${safeImageUrl}') center / cover no-repeat !important; ` +
+      `background: url('${safeImageUrl}') ${safePosition} / cover no-repeat !important; ` +
       `background-image: url('${safeImageUrl}') !important; ` +
       `background-repeat: no-repeat !important; ` +
       `background-size: cover !important; ` +
-      `background-position: center !important; ` +
+      `background-position: ${safePosition} !important; ` +
       `background-color: transparent !important;`
     );
 
@@ -259,30 +260,40 @@ function restoreAllCovers() {
 
   let applied = 0;
   courseIds.forEach((courseId) => {
-    const imageUrl = coversCache[courseId];
-    if (imageUrl) {
-      const result = applyCourseCover(courseId, imageUrl);
-      if (result > 0) applied++;
+    const entry = coversCache[courseId];
+    if (entry) {
+      const imageUrl = typeof entry === 'string' ? entry : entry.imageUrl;
+      const position = typeof entry === 'string' ? '50% 50%' : (entry.position || '50% 50%');
+      if (imageUrl) {
+        const result = applyCourseCover(courseId, imageUrl, position);
+        if (result > 0) applied++;
+      }
     }
   });
 
   const urlMatch = window.location.href.match(ULTRA_COURSE_REGEX);
   if (urlMatch) {
     const courseIdFromUrl = urlMatch[1];
-    if (coversCache[courseIdFromUrl] && applied === 0) {
-      dbg(`⚠ URL matched course ${courseIdFromUrl} but no banner found — trying inside-course banners`);
-      const safeUrl = sanitizeUrl(coversCache[courseIdFromUrl]);
-      if (safeUrl) {
-        document.querySelectorAll('[class*="banner"], [class*="header"]').forEach((el) => {
-          if (el.getBoundingClientRect().width > 100 && el.getBoundingClientRect().height > 50) {
-            el.setAttribute('data-bb-cover', courseIdFromUrl);
-            el.setAttribute('style',
-              `background: url('${safeUrl}') center / cover no-repeat !important; ` +
-              `background-image: url('${safeUrl}') !important;`
-            );
-            applied++;
-          }
-        });
+    const entry = coversCache[courseIdFromUrl];
+    if (entry && applied === 0) {
+      const imageUrl = typeof entry === 'string' ? entry : entry.imageUrl;
+      const position = typeof entry === 'string' ? '50% 50%' : (entry.position || '50% 50%');
+      if (imageUrl) {
+        dbg(`⚠ URL matched course ${courseIdFromUrl} but no banner found — trying inside-course banners`);
+        const safeUrl = sanitizeUrl(imageUrl);
+        const safePosition = String(position).replace(/[^0-9.%\s]/g, '');
+        if (safeUrl) {
+          document.querySelectorAll('[class*="banner"], [class*="header"]').forEach((el) => {
+            if (el.getBoundingClientRect().width > 100 && el.getBoundingClientRect().height > 50) {
+              el.setAttribute('data-bb-cover', courseIdFromUrl);
+              el.setAttribute('style',
+                `background: url('${safeUrl}') ${safePosition} / cover no-repeat !important; ` +
+                `background-image: url('${safeUrl}') !important;`
+              );
+              applied++;
+            }
+          });
+        }
       }
     }
   }
@@ -299,6 +310,14 @@ function loadCoversFromStorage(callback) {
       dbg(`📦 sync covers: ${Object.keys(syncCovers).length}, local covers: ${Object.keys(localCovers).length}`);
 
       const merged = { ...syncCovers, ...localCovers };
+
+      // Normalize: convert old string-only entries to { imageUrl, position }
+      Object.keys(merged).forEach((key) => {
+        const val = merged[key];
+        if (typeof val === 'string') {
+          merged[key] = { imageUrl: val, position: '50% 50%' };
+        }
+      });
 
       chrome.storage.local.set({ courseCovers: merged }, () => {
         const prevCount = Object.keys(coversCache).length;
@@ -379,32 +398,57 @@ function setupCoverWatch() {
 //  Initialization
 // ═════════════════════════════════════════════════════════
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (changes.cachedCSS) {
-    const css = changes.cachedCSS.newValue;
-    if (css) {
-      injectCSS(css);
-      startCSSWatcher(css);
-    } else {
+  if (changes.masterEnabled) {
+    if (changes.masterEnabled.newValue === false) {
       resetTheme();
+      Object.keys(coversCache).forEach((id) => resetCourseCover(id));
+      coversCache = {};
+    } else {
+      loadAndApply();
+      chrome.storage.local.get(['font'], (data) => {
+        if (data.font) applySystemFont(data.font);
+      });
+      restoreCourseCovers();
     }
+    return;
   }
-  if (changes.courseCovers) {
-    coversCache = changes.courseCovers.newValue || {};
-    dbg(`📨 Storage changed (${areaName}) — coversCache updated (${Object.keys(coversCache).length} courses)`);
-    restoreAllCovers();
-  }
-  if (changes.font) {
-    applySystemFont(changes.font.newValue);
-  }
+
+  chrome.storage.sync.get(['masterEnabled'], (data) => {
+    if (data.masterEnabled === false) return;
+
+    if (changes.cachedCSS) {
+      const css = changes.cachedCSS.newValue;
+      if (css) {
+        injectCSS(css);
+        startCSSWatcher(css);
+      } else {
+        resetTheme();
+      }
+    }
+    if (changes.courseCovers) {
+      coversCache = changes.courseCovers.newValue || {};
+      dbg(`📨 Storage changed (${areaName}) — coversCache updated (${Object.keys(coversCache).length} courses)`);
+      restoreAllCovers();
+    }
+    if (changes.font) {
+      applySystemFont(changes.font.newValue);
+    }
+  });
 });
 
 function initialize() {
-  loadAndApply();
-  chrome.storage.sync.get(['font'], (data) => {
-    if (data.font) applySystemFont(data.font);
+  chrome.storage.sync.get(['masterEnabled'], (data) => {
+    if (data.masterEnabled === false) {
+      dbg('⏸ Master toggle is OFF — skipping initialization');
+      return;
+    }
+    loadAndApply();
+    chrome.storage.local.get(['font'], (fData) => {
+      if (fData.font) applySystemFont(fData.font);
+    });
+    restoreCourseCovers();
+    setupCoverWatch();
   });
-  restoreCourseCovers();
-  setupCoverWatch();
 }
 
 if (document.readyState === 'loading') {
@@ -414,6 +458,41 @@ if (document.readyState === 'loading') {
 }
 
 // ─── Message Listener ─────────────────────────────────────
+
+function resetCourseCover(courseId) {
+  delete coversCache[courseId];
+  const styleId = `bb-cover-style-${courseId}`;
+  const styleEl = document.getElementById(styleId);
+  if (styleEl) styleEl.remove();
+
+  const mapped = courseBannerMap[courseId];
+  if (mapped && document.contains(mapped)) {
+    mapped.removeAttribute('style');
+    mapped.removeAttribute('data-bb-cover');
+  }
+  document.querySelectorAll('.course-banner').forEach((banner) => {
+    const card = banner.closest('.element-card, [class*="course-element"], [class*="course-card"], article');
+    if (!card) return;
+    const id = getCourseIdFromCard(card);
+    if (id === courseId) {
+      banner.removeAttribute('style');
+      banner.removeAttribute('data-bb-cover');
+    }
+  });
+  chrome.storage.local.get(['courseCovers'], (data) => {
+    const covers = data.courseCovers || {};
+    delete covers[courseId];
+    chrome.storage.local.set({ courseCovers: covers });
+  });
+  chrome.storage.sync.get(['courseCovers'], (data) => {
+    const covers = data.courseCovers || {};
+    if (covers[courseId]) {
+      delete covers[courseId];
+      chrome.storage.sync.set({ courseCovers: covers });
+    }
+  });
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   try {
     // ─── Apply theme (CSS string from popup) ───
@@ -421,6 +500,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       injectCSS(msg.css);
       startCSSWatcher(msg.css);
       chrome.storage.local.set({ cachedCSS: msg.css });
+      return false;
+    }
+
+    // ─── Preview theme (temporary, not saved) ───
+    if (msg.action === 'previewThemeCSS') {
+      injectCSS(msg.css);
+      startCSSWatcher(msg.css);
+      return false;
+    }
+
+    // ─── Restore theme from storage (end preview) ───
+    if (msg.action === 'restoreTheme') {
+      loadAndApply();
       return false;
     }
 
@@ -448,14 +540,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse({ success: false, error: 'Missing courseId or imageUrl' });
         return true;
       }
-      coversCache[msg.courseId] = msg.imageUrl;
-      applyCourseCover(msg.courseId, msg.imageUrl);
+      coversCache[msg.courseId] = { imageUrl: msg.imageUrl, position: msg.position || '50% 50%' };
+      applyCourseCover(msg.courseId, msg.imageUrl, msg.position);
       chrome.storage.local.get(['courseCovers'], (data) => {
         const covers = data.courseCovers || {};
-        covers[msg.courseId] = msg.imageUrl;
-        chrome.storage.local.set({ courseCovers: covers });
+        covers[msg.courseId] = { imageUrl: msg.imageUrl, position: msg.position || '50% 50%' };
+        chrome.storage.local.set({ courseCovers: covers }, () => {
+          sendResponse({ success: true });
+        });
       });
-      sendResponse({ success: true });
       return true;
     }
 
@@ -465,31 +558,45 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse({ success: false, error: 'Missing courseId' });
         return true;
       }
-      delete coversCache[msg.courseId];
-      const styleId = `bb-cover-style-${msg.courseId}`;
-      const styleEl = document.getElementById(styleId);
-      if (styleEl) styleEl.remove();
-
-      const mapped = courseBannerMap[msg.courseId];
-      if (mapped && document.contains(mapped)) {
-        mapped.removeAttribute('style');
-        mapped.removeAttribute('data-bb-cover');
-      }
-      document.querySelectorAll('.course-banner').forEach((banner) => {
-        const card = banner.closest('.element-card, [class*="course-element"], [class*="course-card"], article');
-        if (!card) return;
-        const id = getCourseIdFromCard(card);
-        if (id === msg.courseId) {
-          banner.removeAttribute('style');
-          banner.removeAttribute('data-bb-cover');
-        }
-      });
-      chrome.storage.local.get(['courseCovers'], (data) => {
-        const covers = data.courseCovers || {};
-        delete covers[msg.courseId];
-        chrome.storage.local.set({ courseCovers: covers });
-      });
+      resetCourseCover(msg.courseId);
       sendResponse({ success: true });
+      return true;
+    }
+
+    // ─── Disable all customization ───
+    if (msg.action === 'disableAll') {
+      resetTheme();
+      Object.keys(coversCache).forEach((id) => resetCourseCover(id));
+      coversCache = {};
+      sendResponse({ success: true });
+      return true;
+    }
+
+    // ─── Enable all customization ───
+    if (msg.action === 'enableAll') {
+      loadAndApply();
+      chrome.storage.local.get(['font'], (data) => {
+        if (data.font) applySystemFont(data.font);
+      });
+      restoreCourseCovers();
+      sendResponse({ success: true });
+      return true;
+    }
+
+    // ─── Fetch image as data URL (bypass CORS) ───
+    if (msg.action === 'fetchImage') {
+      fetch(msg.url)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.blob();
+        })
+        .then((blob) => {
+          const reader = new FileReader();
+          reader.onload = () => sendResponse({ dataUrl: reader.result });
+          reader.onerror = () => sendResponse({ dataUrl: null, error: 'Failed to read image' });
+          reader.readAsDataURL(blob);
+        })
+        .catch((err) => sendResponse({ dataUrl: null, error: err.message || 'Fetch failed' }));
       return true;
     }
 
