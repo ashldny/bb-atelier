@@ -208,12 +208,106 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
   background-color: var(--palette-action-hover, rgba(0,0,0,0.04)) !important;
 }
 
+/* ─── Activity stream items (hover uses hashed classes) ─── */
+.stream-item-container:hover,
+.stream-item:hover,
+[class*="stream-item"]:hover,
+.item:hover,
+[class^="item_"]:hover {
+  background-color: var(--palette-action-hover, rgba(0,0,0,0.04)) !important;
+}
+
+/* Stream item title links */
+.stream-item-container:hover .js-title-link,
+.stream-item:hover .js-title-link,
+[class*="stream-item"]:hover .js-title-link,
+[class^="item_"]:hover a {
+  color: var(--palette-link-hover) !important;
+}
+
+/* Stream item text colors — hardcoded rgb(38,38,38) */
+.stream-item-container .js-title-link,
+.stream-item .js-title-link,
+[class*="stream-item"] .js-title-link {
+  color: var(--palette-text-primary) !important;
+}
+
 /* ─── Tooltips ─── */
 .tooltip,
 .bb-tooltip,
 [class*="tooltip"] {
   background-color: var(--palette-background-b10, #000000) !important;
   color: var(--palette-text-primary, #ffffff) !important;
+}
+
+/* ─── Generic list item hover (hardcoded backgrounds) ─── */
+[class*="list-item"]:hover,
+[class*="row"]:hover,
+li:hover {
+  background-color: var(--palette-action-hover, rgba(0,0,0,0.04)) !important;
+}
+
+/* ─── Input / select fields with hardcoded borders ─── */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="url"],
+input[type="password"],
+textarea,
+select {
+  border-color: var(--palette-border-main, #cdcdcd) !important;
+  background-color: var(--palette-background-paper, #ffffff) !important;
+  color: var(--palette-text-primary, #262626) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--palette-focus-main, #a234b5) !important;
+  outline-color: var(--palette-focus-main, #a234b5) !important;
+}
+
+/* ─── Scrollbar styling ─── */
+::-webkit-scrollbar {
+  background-color: var(--palette-background-b2, #f5f5f5) !important;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--palette-border-main, #cdcdcd) !important;
+}
+
+/* ─── Badge / notification count ─── */
+.badge,
+[class*="badge"],
+[class*="count"] {
+  background-color: var(--palette-brand-main, #a234b5) !important;
+  color: var(--palette-brand-contrastText, #ffffff) !important;
+}
+
+/* ─── Progress bars ─── */
+.progress,
+[class*="progress-bar"] {
+  background-color: var(--palette-background-b3, #e0e0e0) !important;
+}
+.progress-bar,
+[class*="progress-fill"] {
+  background-color: var(--palette-brand-main, #a234b5) !important;
+}
+
+/* ─── Tables ─── */
+table {
+  border-color: var(--palette-border-main, #cdcdcd) !important;
+}
+th {
+  background-color: var(--palette-background-b2, #f5f5f5) !important;
+  color: var(--palette-text-primary, #262626) !important;
+}
+td {
+  border-color: var(--palette-divider, rgba(0,0,0,0.12)) !important;
+  color: var(--palette-text-primary, #262626) !important;
+}
+tr:hover td {
+  background-color: var(--palette-action-hover, rgba(0,0,0,0.04)) !important;
 }
 `);
 
