@@ -1,12 +1,22 @@
 // ═════════════════════════════════════════════════════════
 //  Bb Atelier — Saved Themes UI
-//  Save, load, and delete custom themes
+//  Save, load, delete, export, import, and preview custom themes
 // ═════════════════════════════════════════════════════════
 
 import { derivePalette } from '../theme/palette.js';
-import { applyThemeToBb } from '../messaging/themeMessaging.js';
+import { applyThemeToBb, previewThemeOnBb, restoreThemeOnBb } from '../messaging/themeMessaging.js';
 import { escapeHtml } from '../utils/sanitization.js';
 import { DEFAULT_BG, DEFAULT_ACCENT, DEFAULT_NAVBAR } from '../utils/constants.js';
+import { showToast, debounce, isValidHex } from '../utils/ui.js';
+
+const debouncedPreview = debounce((theme) => {
+  const { overrides, darkOverrides, staticVars } = derivePalette(
+    theme.pageBg || DEFAULT_BG,
+    theme.accent || DEFAULT_ACCENT,
+    theme.navbar || DEFAULT_NAVBAR,
+  );
+  previewThemeOnBb(overrides, darkOverrides, staticVars);
+}, 150);
 
 /**
  * Initialize the Saved Themes tab
@@ -14,10 +24,16 @@ import { DEFAULT_BG, DEFAULT_ACCENT, DEFAULT_NAVBAR } from '../utils/constants.j
 export function initSaved() {
   document.getElementById('saveCurrentBtn').addEventListener('click', () => {
     const isCustom = document.querySelector('input[name="appearance"]:checked').value === 'custom';
-    if (!isCustom) return;
+    if (!isCustom) {
+      showToast('Switch to Custom mode first', 'error');
+      return;
+    }
 
     const name = prompt('Theme name:', 'My Theme');
     if (!name) return;
+
+    const trimmed = name.trim().slice(0, 40);
+    if (!trimmed) return;
 
     const pageBg = document.getElementById('pageBgPicker').value || DEFAULT_BG;
     const accent = document.getElementById('activeTabGlowPicker').value || DEFAULT_ACCENT;
@@ -25,10 +41,20 @@ export function initSaved() {
 
     chrome.storage.sync.get(['savedThemes'], (data) => {
       const themes = data.savedThemes || {};
-      themes[name] = { pageBg, accent, navbar };
-      chrome.storage.sync.set({ savedThemes: themes }, renderSaved);
+      themes[trimmed] = { pageBg, accent, navbar };
+      chrome.storage.sync.set({ savedThemes: themes }, () => {
+        renderSaved();
+        showToast(`Saved "${trimmed}"`);
+      });
     });
   });
+
+  document.getElementById('exportThemesBtn').addEventListener('click', exportThemes);
+  document.getElementById('importThemesBtn').addEventListener('click', () => {
+    document.getElementById('importThemesFile').click();
+  });
+  document.getElementById('importThemesFile').addEventListener('change', importThemes);
+
   renderSaved();
 }
 
@@ -64,6 +90,16 @@ export function renderSaved() {
       `;
     }).join('');
 
+    // Hover preview
+    list.querySelectorAll('.saved-row').forEach((row) => {
+      const name = row.dataset.name;
+      const t = themes[name];
+      if (!t) return;
+
+      row.addEventListener('mouseenter', () => debouncedPreview(t));
+      row.addEventListener('mouseleave', () => restoreThemeOnBb());
+    });
+
     list.querySelectorAll('.load-saved').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -89,6 +125,7 @@ export function renderSaved() {
             customMode: true,
           }, () => {
             applyThemeToBb(overrides, darkOverrides, staticVars);
+            showToast(`Loaded "${name}"`);
           });
         });
       });
@@ -99,12 +136,84 @@ export function renderSaved() {
         e.stopPropagation();
         const row = btn.closest('.saved-row');
         const name = row.dataset.name;
+        if (!confirm(`Delete "${name}"?`)) return;
         chrome.storage.sync.get(['savedThemes'], (data) => {
           const themes = data.savedThemes || {};
           delete themes[name];
-          chrome.storage.sync.set({ savedThemes: themes }, renderSaved);
+          chrome.storage.sync.set({ savedThemes: themes }, () => {
+            renderSaved();
+            showToast(`Deleted "${name}"`, 'info');
+          });
         });
       });
     });
   });
+}
+
+// ─── Export / Import ──────────────────────────────────────
+
+function exportThemes() {
+  chrome.storage.sync.get(['savedThemes'], (data) => {
+    const themes = data.savedThemes || {};
+    const exportData = {
+      version: 1,
+      themes: Object.entries(themes).map(([name, t]) => ({
+        name,
+        pageBg: t.pageBg || DEFAULT_BG,
+        accent: t.accent || DEFAULT_ACCENT,
+        navbar: t.navbar || DEFAULT_NAVBAR,
+      })),
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bb-atelier-themes.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Themes exported');
+  });
+}
+
+function importThemes(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.themes || !Array.isArray(data.themes)) {
+        showToast('Invalid theme file format', 'error');
+        return;
+      }
+
+      chrome.storage.sync.get(['savedThemes'], (existing) => {
+        const themes = existing.savedThemes || {};
+        let imported = 0;
+
+        data.themes.forEach((t) => {
+          if (t.name && t.pageBg && t.accent && t.navbar
+              && isValidHex(t.pageBg) && isValidHex(t.accent) && isValidHex(t.navbar)) {
+            themes[t.name] = {
+              pageBg: t.pageBg,
+              accent: t.accent,
+              navbar: t.navbar,
+            };
+            imported++;
+          }
+        });
+
+        chrome.storage.sync.set({ savedThemes: themes }, () => {
+          renderSaved();
+          showToast(`Imported ${imported} theme(s)`);
+        });
+      });
+    } catch {
+      showToast('Failed to parse theme file', 'error');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
 }

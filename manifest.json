@@ -6,7 +6,8 @@
 
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "unlimitedStorage"
   ],
 
   "host_permissions": [
@@ -14,6 +15,10 @@
     "*://*.blackboard.com/*",
     "*://*.ultra.blackboard.com/*"
   ],
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
 
   "action": {
     "default_popup": "popup.html",
