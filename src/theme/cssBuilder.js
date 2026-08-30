@@ -31,6 +31,9 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
   // so setting these at :root is the most powerful lever we have.
 
   lines.push(':root, .mode-light {');
+  lines.push(
+    '  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;'
+  );
   for (const [key, val] of Object.entries(overrides)) {
     lines.push(`  ${key}: ${val};`);
   }
@@ -38,6 +41,9 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
   lines.push('}');
 
   lines.push('.mode-dark {');
+  lines.push(
+    '  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;'
+  );
   for (const [key, val] of Object.entries(darkOverrides)) {
     lines.push(`  ${key}: ${val};`);
   }
@@ -201,35 +207,123 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
   color: var(--palette-text-primary, #262626) !important;
 }
 
-/* ─── Course card hover states ─── */
-.element-card:hover,
-.course-card:hover,
-[class*="course-element"]:hover {
-  background-color: var(--palette-action-hover, rgba(0,0,0,0.04)) !important;
+/* ─── Activity stream items — hover background on ::before pseudo ─── */
+.base-recent-activity .stream-item:before {
+  background-color: color-mix(in srgb, var(--palette-background-default) 85%, white) !important;
+  transition: opacity 0.2s ease, background-color 0.2s ease !important;
 }
 
-/* ─── Activity stream items (hover uses hashed classes) ─── */
-.stream-item-container:hover,
-.stream-item:hover,
-[class*="stream-item"]:hover,
-.item:hover,
-[class^="item_"]:hover {
-  background-color: var(--palette-action-hover, rgba(0,0,0,0.04)) !important;
+.base-recent-activity .stream-item:hover:before {
+  opacity: 1 !important;
 }
 
 /* Stream item title links */
-.stream-item-container:hover .js-title-link,
-.stream-item:hover .js-title-link,
-[class*="stream-item"]:hover .js-title-link,
-[class^="item_"]:hover a {
-  color: var(--palette-link-hover) !important;
-}
-
-/* Stream item text colors — hardcoded rgb(38,38,38) */
-.stream-item-container .js-title-link,
 .stream-item .js-title-link,
 [class*="stream-item"] .js-title-link {
   color: var(--palette-text-primary) !important;
+}
+
+.stream-item:hover .js-title-link,
+[class*="stream-item"]:hover .js-title-link {
+  color: var(--palette-link-hover) !important;
+}
+
+/* ─── Fix hardcoded background on activity stream action elements ─── */
+.base-recent-activity [style*="background-color: rgb(109 65 65)"],
+.base-recent-activity [style*="background-color: rgb(109, 65, 65)"],
+.activity-stream [style*="background-color: rgb(109 65  65)"],
+.activity-stream [style*="background-color: rgb(109, 65, 65)"],
+[class*="stream-item"] [style*="background-color: rgb(109 65 65)"],
+[class*="stream-item"] [style*="background-color: rgb(109, 65, 65)"] {
+  background-color: var(--palette-background-default) !important;
+}
+
+/* ─── Stream filter combobox — match page background ─── */
+.stream-available-bar .MuiInputBase-root,
+.stream-available-bar .MuiOutlinedInput-root,
+
+/* ─── Activity stream header bars (hashed MUI classes) ─── */
+.base-recent-activity .makeStylesroot-0-2-492,
+.base-recent-activity .makeStylesroot-0-2-811,
+.base-recent-activity .makeStylesroot-0-2-824,
+.activity-stream .makeStylesroot-0-2-492,
+.activity-stream .makeStylesroot-0-2-811,
+.activity-stream .makeStylesroot-0-2-824 {
+  background-color: var(--palette-primary-main) !important;
+}
+
+.base-recent-activity .makeStylesroot-0-2-824,
+.activity-stream .makeStylesroot-0-2-824 {
+  color: var(--palette-primary-contrastText) !important;
+}
+
+.base-recent-activity .makeStylesroot-0-2-811,
+.base-recent-activity .makeStylesdividerButton-0-2-493,
+.activity-stream .makeStylesroot-0-2-811,
+.activity-stream .makeStylesdividerButton-0-2-493 {
+  border-bottom-color: color-mix(in srgb, var(--palette-primary-main) 60%, black) !important;
+}
+
+/* ─── Navbar header/heading (hashed MUI classes) ─── */
+.makeStylesroot-0-2-325,
+.makeStylesroot-0-2-11 {
+  background-color: var(--palette-primary-main) !important;
+}
+
+.makeStylesroot-0-2-325 {
+  border-bottom-color: color-mix(in srgb, var(--palette-primary-main) 60%, black) !important;
+}
+
+.makeStylesroot-0-2-338 {
+  color: var(--palette-primary-contrastText) !important;
+}
+
+/* ─── Selected accent color (active nav buttons) ─── */
+.color-selection-live-mode .color-selection-preview-bb-close .bb-close,
+.color-selection-live-mode .active .base-navigation-button-content,
+.color-selection-live-mode .active .integration-navigation-button-content {
+  background-color: var(--palette-brand-main) !important;
+  color: var(--palette-brand-contrastText) !important;
+}
+
+/* ─── Filter button (combobox) — lighter page bg ─── */
+#streams-filter .MuiInputBase-root,
+#streams-filter .MuiOutlinedInput-root,
+.stream-available-bar .MuiInputBase-root,
+.stream-available-bar .MuiOutlinedInput-root {
+  background-color: var(--palette-background-b3) !important;
+}
+
+/* ─── Filter button text label ─── */
+.muiltr-dpz1f2 {
+  color: var(--palette-text-primary) !important;
+}
+
+/* ─── Filter button "Show All" text ─── */
+.muiltr-qgg64x {
+  color: var(--palette-text-primary) !important;
+  background-color: var(--palette-background-b3) !important;
+}
+
+/* ─── Filter button label gradient (page bg → lighter page bg) ─── */
+.muiltr-dpz1f2.MuiInputLabel-shrink::before {
+  background: linear-gradient(
+    var(--palette-background-default) 0%,
+    var(--palette-background-default) 49%,
+    var(--palette-background-b3) 50%,
+    var(--palette-background-b4) 100%
+  ) !important;
+}
+
+/* ─── Course cards & stream items — proper backgrounds ─── */
+.element-card,
+.stream-panel-activity-card {
+  background-color: var(--palette-background-paper) !important;
+}
+
+.stream-item,
+.stream-item.angular-animate {
+  background-color: var(--palette-background-default) !important;
 }
 
 /* ─── Tooltips ─── */
@@ -238,13 +332,6 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
 [class*="tooltip"] {
   background-color: var(--palette-background-b10, #000000) !important;
   color: var(--palette-text-primary, #ffffff) !important;
-}
-
-/* ─── Generic list item hover (hardcoded backgrounds) ─── */
-[class*="list-item"]:hover,
-[class*="row"]:hover,
-li:hover {
-  background-color: var(--palette-action-hover, rgba(0,0,0,0.04)) !important;
 }
 
 /* ─── Input / select fields with hardcoded borders ─── */
@@ -264,8 +351,8 @@ select {
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: var(--palette-focus-main, #a234b5) !important;
-  outline-color: var(--palette-focus-main, #a234b5) !important;
+  border-color: var(--palette-focus-main, #670D2F) !important;
+  outline-color: var(--palette-focus-main, #670D2F) !important;
 }
 
 /* ─── Scrollbar styling ─── */
@@ -280,7 +367,7 @@ select:focus {
 .badge,
 [class*="badge"],
 [class*="count"] {
-  background-color: var(--palette-brand-main, #a234b5) !important;
+  background-color: var(--palette-brand-main, #670D2F) !important;
   color: var(--palette-brand-contrastText, #ffffff) !important;
 }
 
@@ -291,7 +378,29 @@ select:focus {
 }
 .progress-bar,
 [class*="progress-fill"] {
-  background-color: var(--palette-brand-main, #a234b5) !important;
+  background-color: var(--palette-brand-main, #670D2F) !important;
+}
+
+/* ─── Content areas — map hardcoded Ultra grays to palette ─── */
+.contentList > li,
+.announcementList > li,
+.gradebook-table-wrapper,
+.courseInformation,
+[class*="contentArea"],
+[class*="courseHeader"] {
+  background-color: var(--palette-background-paper) !important;
+  border-color: var(--palette-divider) !important;
+}
+/* Ultra navigation rail — ensure primary mapping */
+.base-navigation-button a,
+.nav-link,
+[class*="navigationButton"] {
+  color: var(--palette-primary-contrastText) !important;
+}
+.base-navigation-button.active,
+.base-navigation-button[aria-current="true"] {
+  background-color: color-mix(in srgb, var(--palette-brand-main) 14%, var(--palette-primary-main)) !important;
+  border-left-color: var(--palette-brand-main) !important;
 }
 
 /* ─── Tables ─── */

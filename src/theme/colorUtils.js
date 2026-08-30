@@ -9,9 +9,7 @@
  */
 export function hexToRgb(hex) {
   const h = String(hex).replace('#', '');
-  const cleaned = h.length === 3
-    ? h[0] + h[0] + h[1] + h[1] + h[2] + h[2]
-    : h.substring(0, 6);
+  const cleaned = h.length === 3 ? h[0] + h[0] + h[1] + h[1] + h[2] + h[2] : h.substring(0, 6);
   const n = parseInt(cleaned, 16);
   if (isNaN(n)) return { r: 0, g: 0, b: 0 };
   return {
@@ -29,10 +27,17 @@ export function hexToRgb(hex) {
  * @returns {string} e.g. "#ff00aa"
  */
 export function rgbToHex(r, g, b) {
-  return '#' + [r, g, b]
-    .map(c => Math.min(255, Math.max(0, Math.round(c))).toString(16).padStart(2, '0'))
-    .join('')
-    .substring(0, 7);
+  return (
+    '#' +
+    [r, g, b]
+      .map((c) =>
+        Math.min(255, Math.max(0, Math.round(c)))
+          .toString(16)
+          .padStart(2, '0')
+      )
+      .join('')
+      .substring(0, 7)
+  );
 }
 
 /**
@@ -42,8 +47,10 @@ export function rgbToHex(r, g, b) {
  */
 export function luminance(hex) {
   const { r, g, b } = hexToRgb(hex);
-  const rs = r / 255, gs = g / 255, bs = b / 255;
-  const toLin = (c) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  const rs = r / 255,
+    gs = g / 255,
+    bs = b / 255;
+  const toLin = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
   return 0.2126 * toLin(rs) + 0.7152 * toLin(gs) + 0.0722 * toLin(bs);
 }
 
@@ -93,7 +100,7 @@ export function mix(hex1, hex2, ratio) {
   return rgbToHex(
     c1.r + (c2.r - c1.r) * ratio,
     c1.g + (c2.g - c1.g) * ratio,
-    c1.b + (c2.b - c1.b) * ratio,
+    c1.b + (c2.b - c1.b) * ratio
   );
 }
 

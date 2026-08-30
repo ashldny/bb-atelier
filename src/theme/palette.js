@@ -26,9 +26,13 @@ export function derivePalette(pageBg, accent, navbar) {
 
   const useNavbar = navbar && navbar !== pageBg && navbar !== '#000000';
   const primaryMain = useNavbar ? navbar : textPrimary;
-  const primaryContrast = useNavbar ? contrastText(navbar) : (dark ? '#262626' : '#ffffff');
-  const primaryLight = useNavbar ? lighten(navbar, 25) : (dark ? lighten(bg, 30) : lighten(primaryMain, 40));
-  const primaryDark = useNavbar ? darken(navbar, 15) : (dark ? '#ffffff' : darken(primaryMain, 15));
+  const primaryContrast = useNavbar ? contrastText(navbar) : dark ? '#262626' : '#ffffff';
+  const primaryLight = useNavbar
+    ? lighten(navbar, 25)
+    : dark
+      ? lighten(bg, 30)
+      : lighten(primaryMain, 40);
+  const primaryDark = useNavbar ? darken(navbar, 15) : dark ? '#ffffff' : darken(primaryMain, 15);
 
   const borderMain = dark ? lighten(bg, 35) : darken(bg, 15);
   const borderDark = dark ? lighten(bg, 55) : darken(bg, 35);
@@ -48,7 +52,9 @@ export function derivePalette(pageBg, accent, navbar) {
   const linkActive = accent;
   const linkHover = lighten(accent, 15);
   const linkSelected = accent;
-  const linkDisabled = dark ? mix(brighten(accent, 50), accent, 0.5) : mix(darken(accent, 50), accent, 0.3);
+  const linkDisabled = dark
+    ? mix(brighten(accent, 50), accent, 0.5)
+    : mix(darken(accent, 50), accent, 0.3);
 
   const focusMain = dark ? lighten(accent, 20) : darken(accent, 10);
   const focusLight = dark ? darken(accent, 10) : lighten(accent, 20);
