@@ -1,0 +1,8 @@
+node_modules
+content.js
+content.js.map
+darkreader.js
+Fonts/
+icons/*.png
+*.zip
+dist/
