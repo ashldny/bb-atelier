@@ -1,25 +1,21 @@
 {
   "name": "Bb Atelier",
-  "description": "Customize Blackboard Ultra appearance",
+  "description": "Customize Blackboard Ultra appearance — Dark Reader engine",
   "version": "2.0",
   "manifest_version": 3,
-
-  "permissions": [
-    "activeTab",
-    "storage",
-    "unlimitedStorage"
-  ],
-
+  "permissions": ["activeTab", "storage", "unlimitedStorage", "scripting"],
+  "optional_host_permissions": ["*://*/*"],
   "host_permissions": [
     "*://elearning.qu.edu.qa/*",
     "*://*.blackboard.com/*",
     "*://*.ultra.blackboard.com/*"
   ],
-
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
-
   "action": {
     "default_popup": "popup.html",
     "default_title": "Bb Atelier",
@@ -29,13 +25,11 @@
       "128": "icons/icon128.svg"
     }
   },
-
   "icons": {
     "16": "icons/icon16.svg",
     "48": "icons/icon48.svg",
     "128": "icons/icon128.svg"
   },
-
   "content_scripts": [
     {
       "matches": [
@@ -44,7 +38,19 @@
         "*://*.ultra.blackboard.com/*"
       ],
       "js": ["content.js"],
-      "run_at": "document_start"
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["darkreader.js", "content.js.map"],
+      "matches": [
+        "*://elearning.qu.edu.qa/*",
+        "*://*.blackboard.com/*",
+        "*://*.ultra.blackboard.com/*",
+        "*://*/*"
+      ]
     }
   ]
 }

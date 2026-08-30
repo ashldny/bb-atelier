@@ -12,7 +12,7 @@
   <div class="header">
     <div class="header-row">
       <div class="header-text">
-        <h1>🎨 Bb Atelier</h1>
+        <h1>Bb Atelier</h1>
         <span class="subtitle">Blackboard Ultra Theme Studio</span>
       </div>
       <label class="toggle-label master-toggle" title="Enable / disable all customization">
@@ -24,76 +24,99 @@
 
   <!-- ═══ TAB NAVBAR ═══ -->
   <div class="tab-nav" role="tablist">
-    <button class="tab-btn active" data-tab="theme" role="tab" aria-selected="true" aria-controls="tab-theme">🎨 Theme</button>
-    <button class="tab-btn" data-tab="saved" role="tab" aria-selected="false" aria-controls="tab-saved">💾 Saved</button>
-    <button class="tab-btn" data-tab="covers" role="tab" aria-selected="false" aria-controls="tab-covers">🖼 Covers</button>
+    <button class="tab-btn active" data-tab="theme" role="tab" aria-selected="true" aria-controls="tab-theme">Theme</button>
+    <button class="tab-btn" data-tab="saved" role="tab" aria-selected="false" aria-controls="tab-saved">Saved</button>
+    <button class="tab-btn" data-tab="covers" role="tab" aria-selected="false" aria-controls="tab-covers">Covers</button>
+    <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false" aria-controls="tab-settings">Settings</button>
   </div>
 
   <!-- ═══════════════════════════════════════════════════════
-       TAB: THEME
+       TAB: THEME — with sub-navbar Presets | Colors | Font
        ═══════════════════════════════════════════════════════ -->
   <div class="tab-content active" data-tab="theme" id="tab-theme" role="tabpanel">
 
-    <!-- ─── Presets ─── -->
-    <div class="section">
-      <div class="section-label">Presets</div>
-      <div id="presetGrid" class="preset-grid"></div>
+    <div class="sub-nav" role="tablist" aria-label="Theme sections">
+      <button class="sub-tab-btn active" data-subtab="presets" role="tab" aria-selected="true" aria-controls="sub-presets">Presets</button>
+      <button class="sub-tab-btn" data-subtab="colors" role="tab" aria-selected="false" aria-controls="sub-colors">Colors</button>
+      <button class="sub-tab-btn" data-subtab="font" role="tab" aria-selected="false" aria-controls="sub-font">Font</button>
     </div>
 
-    <!-- ─── Appearance ─── -->
-    <div class="section">
-      <div class="section-label">Theme</div>
-      <div class="radio-group">
-        <label class="radio-row">
-          <input type="radio" name="appearance" value="default" checked />
-          <span>☀️ Default</span>
-        </label>
-        <label class="radio-row">
-          <input type="radio" name="appearance" value="custom" />
-          <span>🎨 Custom</span>
-        </label>
+    <!-- Sub: Presets -->
+    <div class="sub-content active" data-subtab="presets" id="sub-presets" role="tabpanel">
+      <div class="presets-columns">
+        <div class="presets-col">
+          <div class="presets-col-label">
+            <svg class="lucide presets-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.93" y1="4.93" x2="5.58" y2="5.58"/><line x1="18.36" y1="18.36" x2="19.01" y2="19.01"/><line x1="1" y1="12" x2="3" y2="12"/><path d="M15.36 4.64L15.76 4.24M9.04 19.96L9.44 19.56"/></svg>
+            Light
+          </div>
+          <div id="presetGridLight" class="preset-grid-col"></div>
+        </div>
+        <div class="presets-col">
+          <div class="presets-col-label">
+            <svg class="lucide presets-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/><path d="M1 3a12 12 0 0 1 17.92 17.92"/><path d="M2 11h2"/><path d="M11 2v2"/></svg>
+            Dark
+          </div>
+          <div id="presetGridDark" class="preset-grid-col"></div>
+        </div>
       </div>
     </div>
 
-    <!-- ─── Color Pickers (only visible in Custom mode) ─── -->
-    <div class="section" id="colorSection">
-      <div class="section-label">Colors</div>
-
-      <label class="color-swatch">
-        <span class="swatch-label">Page Background</span>
-        <input type="color" id="pageBgPicker" value="#ffffff" />
-      </label>
-
-      <label class="color-swatch">
-        <span class="swatch-label">Accent / Brand Color</span>
-        <input type="color" id="activeTabGlowPicker" value="#a234b5" />
-      </label>
-
-      <label class="color-swatch">
-        <span class="swatch-label">Navbar / Sidebar</span>
-        <input type="color" id="navbarPicker" value="#262626" />
-      </label>
-
+    <!-- Sub: Colors -->
+    <div class="sub-content" data-subtab="colors" id="sub-colors" role="tabpanel">
+      <div class="colors-row">
+        <label class="color-swatch">
+          <span class="swatch-label">Page Background</span>
+          <input type="color" id="pageBgPicker" value="#ffffff" />
+          <span class="swatch-hex" id="hexPageBg">#ffffff</span>
+          <span class="swatch-contrast ok" id="contrastPageBg">Good</span>
+        </label>
+        <label class="color-swatch">
+          <span class="swatch-label">Accent</span>
+          <input type="color" id="activeTabGlowPicker" value="#670D2F" />
+          <span class="swatch-hex" id="hexAccent">#670d2f</span>
+          <span class="swatch-contrast ok" id="contrastAccent">Good</span>
+        </label>
+        <label class="color-swatch">
+          <span class="swatch-label">Navbar / Sidebar</span>
+          <input type="color" id="navbarPicker" value="#262626" />
+          <span class="swatch-hex" id="hexNavbar">#262626</span>
+          <span class="swatch-contrast warn" id="contrastNavbar">Check</span>
+        </label>
+      </div>
       <div class="info-row">
-        <span class="auto-label">🎯 Text colors are auto-derived from your page background</span>
+        <span class="auto-label">Text colors are auto-derived from your page background</span>
       </div>
-
-      <button class="btn primary" id="applyThemeBtn">Apply Theme</button>
     </div>
 
-    <!-- ─── Font ─── -->
-    <div class="section">
-      <div class="section-label">Font</div>
-      <div class="font-row">
-        <select id="fontSelect">
+    <!-- Sub: Font -->
+    <div class="sub-content" data-subtab="font" id="sub-font" role="tabpanel">
+      <label class="font-group-label">Presets</label>
+      <select id="fontSelect" size="4">
+        <optgroup label="Sans-serif">
           <option value="Inter">Inter</option>
           <option value="system-ui">System UI</option>
           <option value="Segoe UI">Segoe UI</option>
           <option value="Roboto">Roboto</option>
-          <option value="custom">📁 Upload Font...</option>
-        </select>
+        </optgroup>
+        <optgroup label="Serif">
+          <option value="Noto Serif">Noto Serif</option>
+          <option value="serif">Generic Serif</option>
+        </optgroup>
+        <optgroup label="Monospace">
+          <option value="monospace">Generic Monospace</option>
+        </optgroup>
+        <optgroup id="fontUploadGroup" label="Your uploads" style="display:none">
+          <option value="custom">Upload Font…</option>
+        </optgroup>
+      </select>
+      <div class="font-upload-row">
+        <button class="btn secondary" id="fontUploadBtn" style="width:auto; padding: 6px 14px;">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload Font
+        </button>
         <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" style="display:none" />
       </div>
+      <div class="font-preview" id="fontPreview">AaBbCc DdEeFf</div>
     </div>
   </div>
 
@@ -104,12 +127,21 @@
     <div class="section">
       <div class="section-label">Saved Themes</div>
       <div id="savedList">
-        <div class="saved-empty">No saved themes yet~</div>
+        <div class="saved-empty">No saved themes yet</div>
       </div>
       <div class="saved-btns">
-        <button class="btn secondary" id="saveCurrentBtn">💾 Save Current Theme</button>
-        <button class="btn secondary" id="exportThemesBtn">📤 Export</button>
-        <button class="btn secondary" id="importThemesBtn">📥 Import</button>
+        <button class="btn secondary" id="saveCurrentBtn">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Current
+        </button>
+        <button class="btn secondary" id="exportThemesBtn">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+        <button class="btn secondary" id="importThemesBtn">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import
+        </button>
         <input type="file" id="importThemesFile" accept=".json" style="display:none" />
       </div>
     </div>
@@ -122,27 +154,41 @@
     <div class="section">
       <div class="section-label">Course Covers</div>
       <select id="courseSelect">
-        <option value="">Select a course...</option>
+        <option value="">Select a course…</option>
       </select>
       <div id="courseCoverPreview" class="cover-preview">
-        <span class="cover-placeholder">🖼 No cover set</span>
+        <span class="cover-placeholder">No cover set</span>
         <img id="coverImage" src="" alt="Course cover preview" />
         <div id="coverFocal" class="cover-focal" title="Drag to adjust position"></div>
       </div>
       <div id="coverHint" class="cover-hint" style="display:none">Drag the circle on the preview to adjust which area shows as the cover</div>
       <div id="coverPositionControls" class="cover-position-row" style="display:none">
         <span class="cover-position-label">Position: <span id="coverPositionText">50% 50%</span></span>
-        <button class="btn tiny" id="resetPositionBtn">Reset</button>
+        <button class="btn icon-btn" id="resetPositionBtn" aria-label="Reset position" title="Reset position">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
       </div>
       <div class="cover-btns">
-        <button class="btn secondary" id="uploadCoverBtn">📁 Upload Cover</button>
-        <button class="btn secondary" id="coverUrlBtn">🔗 From URL</button>
-        <button class="btn secondary danger" id="removeCoverBtn">🗑 Remove</button>
+        <button class="btn secondary" id="uploadCoverBtn">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload
+        </button>
+        <button class="btn secondary" id="coverUrlBtn">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          URL
+        </button>
+        <button class="btn secondary danger" id="removeCoverBtn" aria-label="Remove cover" title="Remove cover">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
       </div>
       <div id="coverUrlInput" class="cover-url-row" style="display:none">
         <input type="url" id="coverUrlField" class="cover-url-field" placeholder="https://example.com/image.jpg" />
-        <button class="btn tiny" id="coverUrlApply">Apply</button>
-        <button class="btn tiny" id="coverUrlCancel">✕</button>
+        <button class="btn icon-btn" id="coverUrlApply" aria-label="Apply URL" title="Apply">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+        <button class="btn icon-btn" id="coverUrlCancel" aria-label="Cancel" title="Cancel">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
       <input type="file" id="coverUpload" accept="image/*" style="display:none" />
     </div>
@@ -152,11 +198,82 @@
       <div class="section-label">Image Library</div>
       <div id="libraryGrid" class="library-grid"></div>
       <div class="cover-btns">
-        <button class="btn secondary" id="uploadLibraryBtn">📁 Upload to Library</button>
-        <button class="btn tiny danger" id="clearLibraryBtn">Clear All</button>
+        <button class="btn secondary" id="uploadLibraryBtn">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload
+        </button>
+        <button class="btn icon-btn danger" id="clearLibraryBtn" aria-label="Clear all" title="Clear all">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
         <input type="file" id="libraryUpload" accept="image/*" multiple style="display:none" />
       </div>
       <div class="library-hint" id="libraryHint" style="display:none">Select a course above, then click an image to assign it as the cover</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TAB: SETTINGS
+       ═══════════════════════════════════════════════════════ -->
+  <div class="tab-content" data-tab="settings" id="tab-settings" role="tabpanel">
+
+    <div class="section">
+      <div class="section-label">Custom Domain</div>
+      <div class="settings-field">
+        <input type="text" id="customDomainInput" class="settings-input" placeholder="e.g. blackboard.my-uni.edu" spellcheck="false" />
+        <button class="btn secondary" id="saveCustomDomainBtn" style="width:auto; padding: 6px 14px;">Save</button>
+      </div>
+      <span class="settings-hint">Applies Bb Atelier to your institution's Blackboard domain. Requires host permission on save.</span>
+      <div id="customDomainStatus" class="settings-status"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Engine</div>
+      <div class="radio-group">
+        <label class="radio-row">
+          <input type="radio" name="engine" value="native" checked />
+          <span>Native CSS</span>
+        </label>
+        <label class="radio-row">
+          <input type="radio" name="engine" value="darkreader" />
+          <span>Dark Reader</span>
+        </label>
+      </div>
+      <span class="settings-hint">Native is fast and precise. Dark Reader inverts the whole page dynamically.</span>
+    </div>
+
+    <div class="section">
+      <div class="section-label">General</div>
+      <label class="settings-toggle">
+        <input type="checkbox" id="autoApplyToggle" checked />
+        <span>Auto-apply on Blackboard load</span>
+      </label>
+      <label class="settings-toggle">
+        <input type="checkbox" id="showToastToggle" checked />
+        <span>Show confirmation toasts</span>
+      </label>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Data</div>
+      <div class="settings-actions">
+        <button class="btn secondary" id="exportSettingsBtn">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+        <button class="btn secondary" id="importSettingsBtn">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import
+        </button>
+        <input type="file" id="importSettingsFile" accept=".json" style="display:none" />
+      </div>
+      <div class="settings-actions" style="margin-top:6px">
+        <button class="btn secondary" id="clearCacheBtn">Clear Cache</button>
+        <button class="btn secondary danger" id="resetAllBtn">
+          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Reset All
+        </button>
+      </div>
+      <span class="settings-version" id="versionLabel"></span>
     </div>
   </div>
 
