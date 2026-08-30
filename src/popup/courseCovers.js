@@ -8,7 +8,7 @@ import { escapeHtml, MAX_IMAGE_SIZE, validateFileSize } from '../utils/sanitizat
 
 const DEFAULT_POSITION = '50% 50%';
 
-let currentPosition = DEFAULT_POSITION;
+let _currentPosition = DEFAULT_POSITION;
 let currentCourseId = '';
 
 function normalizeCoverEntry(entry) {
@@ -33,7 +33,7 @@ function updateFocalUI(position) {
   focal.style.top = y + '%';
   text.textContent = `${Math.round(x)}% ${Math.round(y)}%`;
   controls.style.display = 'flex';
-  currentPosition = position;
+  _currentPosition = position;
   const previewImg = document.getElementById('coverImage');
   if (previewImg) previewImg.style.objectPosition = `${x}% ${y}%`;
 }
@@ -97,7 +97,7 @@ function setupFocalDrag() {
 
 function updateCoverPosition(courseId, position) {
   if (!courseId) return;
-  currentPosition = position;
+  _currentPosition = position;
   chrome.storage.local.get(['courseCovers'], (data) => {
     const covers = data.courseCovers || {};
     const entry = normalizeCoverEntry(covers[courseId]);
@@ -124,17 +124,20 @@ export function initCourseCovers() {
 
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (!tabs[0]?.id) return;
-    chrome.tabs.sendMessage(tabs[0].id, { action: 'getCourses' }).then((courses) => {
-      if (!courses || !Array.isArray(courses)) return;
-      const select = document.getElementById('courseSelect');
-      select.innerHTML = '<option value="">Select a course...</option>';
-      courses.forEach((c) => {
-        const opt = document.createElement('option');
-        opt.value = c.id;
-        opt.textContent = c.name;
-        select.appendChild(opt);
-      });
-    }).catch(() => {});
+    chrome.tabs
+      .sendMessage(tabs[0].id, { action: 'getCourses' })
+      .then((courses) => {
+        if (!courses || !Array.isArray(courses)) return;
+        const select = document.getElementById('courseSelect');
+        select.innerHTML = '<option value="">Select a course...</option>';
+        courses.forEach((c) => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name;
+          select.appendChild(opt);
+        });
+      })
+      .catch(() => {});
   });
 
   document.getElementById('courseSelect').addEventListener('change', (e) => {
@@ -284,18 +287,21 @@ function fetchImageAsDataUrl(url) {
   // Fetch through content script to bypass CORS
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (!tabs[0]?.id) return;
-    chrome.tabs.sendMessage(tabs[0].id, { action: 'fetchImage', url }).then((result) => {
-      if (!result || !result.dataUrl) {
-        alert('Failed to fetch image. Check the URL and try again.');
-        return;
-      }
-      saveCover(courseId, result.dataUrl);
-      addToLibrary(result.dataUrl);
-      document.getElementById('coverUrlInput').style.display = 'none';
-      document.getElementById('coverUrlField').value = '';
-    }).catch(() => {
-      alert('Failed to fetch image. The server may block cross-origin requests.');
-    });
+    chrome.tabs
+      .sendMessage(tabs[0].id, { action: 'fetchImage', url })
+      .then((result) => {
+        if (!result || !result.dataUrl) {
+          alert('Failed to fetch image. Check the URL and try again.');
+          return;
+        }
+        saveCover(courseId, result.dataUrl);
+        addToLibrary(result.dataUrl);
+        document.getElementById('coverUrlInput').style.display = 'none';
+        document.getElementById('coverUrlField').value = '';
+      })
+      .catch(() => {
+        alert('Failed to fetch image. The server may block cross-origin requests.');
+      });
   });
 }
 
@@ -335,7 +341,7 @@ function setupLibrary() {
 function addToLibrary(dataUrl) {
   chrome.storage.local.get(['coverLibrary'], (data) => {
     const lib = data.coverLibrary || [];
-    if (lib.some(item => item.dataUrl === dataUrl)) return;
+    if (lib.some((item) => item.dataUrl === dataUrl)) return;
     lib.push({ id: Date.now().toString(36), dataUrl });
     chrome.storage.local.set({ coverLibrary: lib }, renderLibrary);
   });
@@ -362,15 +368,18 @@ function renderLibrary() {
       if (normalized.imageUrl) assignedUrls.add(normalized.imageUrl);
     });
 
-    grid.innerHTML = lib.map((item) => {
-      const isAssigned = assignedUrls.has(item.dataUrl);
-      return `
-        <div class="library-item ${isAssigned ? 'assigned' : ''}" data-id="${item.id}">
+    grid.innerHTML = lib
+      .map((item) => {
+        const isAssigned = assignedUrls.has(item.dataUrl);
+        const safeId = escapeHtml(item.id);
+        return `
+        <div class="library-item ${isAssigned ? 'assigned' : ''}" data-id="${safeId}">
           <img src="${item.dataUrl}" alt="Library image" loading="lazy" />
-          <button class="remove-library" data-id="${item.id}" title="Remove">✕</button>
+          <button class="remove-library" data-id="${safeId}" title="Remove" aria-label="Remove"><svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="M6 6 18 18"/></svg></button>
         </div>
       `;
-    }).join('');
+      })
+      .join('');
 
     grid.querySelectorAll('.library-item').forEach((el) => {
       el.addEventListener('click', (e) => {
@@ -380,7 +389,7 @@ function renderLibrary() {
           return;
         }
         const id = el.dataset.id;
-        const item = lib.find(i => i.id === id);
+        const item = lib.find((i) => i.id === id);
         if (item) saveCover(currentCourseId, item.dataUrl);
       });
     });
@@ -390,7 +399,7 @@ function renderLibrary() {
         e.stopPropagation();
         const id = btn.dataset.id;
         chrome.storage.local.get(['coverLibrary'], (d) => {
-          const updated = (d.coverLibrary || []).filter(i => i.id !== id);
+          const updated = (d.coverLibrary || []).filter((i) => i.id !== id);
           chrome.storage.local.set({ coverLibrary: updated }, renderLibrary);
         });
       });
