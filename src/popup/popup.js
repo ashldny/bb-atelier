@@ -13,7 +13,7 @@ import { loadSettings } from './settings.js';
 import { initSettingsTab } from './settingsTab.js';
 
 // ─── Kick off everything on DOM ready ───
-document.addEventListener('DOMContentLoaded', () => {
+function boot() {
   try {
     initTabs();
   } catch (err) {
@@ -54,4 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (err) {
     console.error('[BbAtelier popup] initSettingsTab failed', err);
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}

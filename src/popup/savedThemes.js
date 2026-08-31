@@ -6,11 +6,11 @@
 
 import { derivePalette } from '../theme/palette.js';
 import { applyThemeToBb, previewThemeOnBb, restoreThemeOnBb, applyFont } from '../messaging/themeMessaging.js';
-import { escapeHtml, isValidHex } from '../utils/sanitization.js';
+import { escapeHtml } from '../utils/sanitization.js';
 import { DEFAULT_BG, DEFAULT_ACCENT, DEFAULT_NAVBAR } from '../utils/constants.js';
-import { showToast, debounce, isValidHex as _isValidHex } from '../utils/ui.js';
-import { luminance } from '../theme/colorUtils.js';
+import { showToast, debounce, isValidHex } from '../utils/ui.js';
 import { applyCurrentTheme } from './theme.js';
+import { updateContrastBadges } from './contrastBadges.js';
 
 const debouncedPreview = debounce((theme) => {
   const { overrides, darkOverrides, staticVars } = derivePalette(
@@ -107,18 +107,43 @@ function saveNamedTheme(name) {
   const accent = document.getElementById('activeTabGlowPicker').value || DEFAULT_ACCENT;
   const navbar = document.getElementById('navbarPicker').value || DEFAULT_NAVBAR;
 
-  chrome.storage.local.get(['font'], (localData) => {
+  chrome.storage.local.get(['font', 'savedThemeFonts'], (localData) => {
+    const rawFont = localData.font || null;
+    const isBlob = rawFont && rawFont.startsWith('data:');
+    const syncFont = isBlob ? null : rawFont;
+
     chrome.storage.sync.get(['savedThemes'], (data) => {
       const themes = data.savedThemes || {};
       themes[name] = {
         pageBg,
         accent,
         navbar,
-        font: localData.font || null,
+        font: syncFont,
+        // marker so render knows to look in local for blob
+        ...(isBlob ? { hasBlob: true } : {}),
       };
       chrome.storage.sync.set({ savedThemes: themes }, () => {
-        renderSaved();
-        showToast(`Saved "${name}"`);
+        if (isBlob) {
+          const map = localData.savedThemeFonts || {};
+          map[name] = rawFont;
+          chrome.storage.local.set({ savedThemeFonts: map }, () => {
+            renderSaved();
+            showToast(`Saved "${name}"`);
+          });
+        } else {
+          // remove any stale blob entry for this name
+          const map = localData.savedThemeFonts || {};
+          if (map[name]) {
+            delete map[name];
+            chrome.storage.local.set({ savedThemeFonts: map }, () => {
+              renderSaved();
+              showToast(`Saved "${name}"`);
+            });
+          } else {
+            renderSaved();
+            showToast(`Saved "${name}"`);
+          }
+        }
       });
     });
   });
@@ -143,8 +168,9 @@ function fontDisplay(font) {
  * Render the saved themes list
  */
 export function renderSaved() {
-  chrome.storage.local.get(['font'], (localData) => {
+  chrome.storage.local.get(['font', 'savedThemeFonts'], (localData) => {
     const currentFont = localData.font || null;
+    const fontBlobs = localData.savedThemeFonts || {};
     chrome.storage.sync.get(['savedThemes'], (data) => {
       const themes = data.savedThemes || {};
       const list = document.getElementById('savedList');
@@ -161,9 +187,9 @@ export function renderSaved() {
           const bg = t.pageBg || DEFAULT_BG;
           const accent = t.accent || DEFAULT_ACCENT;
           const navbar = t.navbar || DEFAULT_NAVBAR;
-          const font = t.font || currentFont || null;
+          const resolvedFont = t.font || fontBlobs[name] || currentFont || null;
           const safeName = escapeHtml(name);
-          const fd = fontDisplay(font);
+          const fd = fontDisplay(resolvedFont);
           return `
           <div class="saved-row" data-name="${safeName}">
             <span class="saved-swatches">
@@ -208,9 +234,13 @@ export function renderSaved() {
           const t = themes[name];
           if (!t) return;
           loadThemeIntoPickers(t);
+          const toApply = t.font || fontBlobs[name] || null;
           chrome.storage.sync.set({ customMode: true }, () => {
             applyCurrentTheme();
-            if (t.font) applyFont(t.font);
+            if (toApply) {
+              chrome.storage.local.set({ font: toApply });
+              applyFont(toApply);
+            }
           });
           showToast(`Loaded "${name}"`);
         });
@@ -238,8 +268,17 @@ export function renderSaved() {
           if (!confirm(`Delete "${name}"?`)) return;
           delete themes[name];
           chrome.storage.sync.set({ savedThemes: themes }, () => {
-            renderSaved();
-            showToast(`Deleted "${name}"`);
+            // also clean local blob map
+            if (fontBlobs[name]) {
+              delete fontBlobs[name];
+              chrome.storage.local.set({ savedThemeFonts: fontBlobs }, () => {
+                renderSaved();
+                showToast(`Deleted "${name}"`);
+              });
+            } else {
+              renderSaved();
+              showToast(`Deleted "${name}"`);
+            }
           });
         });
       });
@@ -269,63 +308,32 @@ export function applyPickers() {
   applyThemeToBb(overrides, darkOverrides, staticVars);
 }
 
-/**
- * Update hex labels + contrast badges in the Colors sub-tab
- * based on current picker values.
- */
-export function updateContrastBadges() {
-  const pairs = [
-    { hexId: 'pageBgPicker', hexOut: 'hexPageBg', conOut: 'contrastPageBg', label: 'bg' },
-    { hexId: 'activeTabGlowPicker', hexOut: 'hexAccent', conOut: 'contrastAccent', label: 'accent' },
-    { hexId: 'navbarPicker', hexOut: 'hexNavbar', conOut: 'contrastNavbar', label: 'navbar' },
-  ];
-  pairs.forEach((p) => {
-    const el = document.getElementById(p.hexId);
-    const hexEl = document.getElementById(p.hexOut);
-    const conEl = document.getElementById(p.conOut);
-    if (!el || !hexEl || !conEl) return;
-    const hex = el.value || DEFAULT_BG;
-    hexEl.textContent = hex;
-
-    const lum = luminance(hex);
-    // text-on-bg contrast: dark bg (<.18) takes white text → good; light bg (>.8) takes dark text → good
-    let ok, msg;
-    if (p.label === 'bg' || p.label === 'navbar') {
-      if (lum < 0.18 || lum > 0.8) { ok = true; msg = 'Good'; }
-      else { ok = false; msg = 'Low'; }
-    } else {
-      // accent: treat as body color, ensure readable against both
-      ok = lum > 0.2 && lum < 0.8;
-      msg = ok ? 'Good' : 'Low';
-    }
-    conEl.textContent = msg;
-    conEl.className = 'swatch-contrast ' + (ok ? 'ok' : 'warn');
-  });
-}
-
 // ─── Export / Import ──────────────────────────────────────
 
 function exportThemes() {
-  chrome.storage.sync.get(['savedThemes'], (data) => {
-    const themes = data.savedThemes || {};
-    const exportData = {
-      version: 1,
-      themes: Object.entries(themes).map(([name, t]) => ({
-        name,
-        pageBg: t.pageBg || DEFAULT_BG,
-        accent: t.accent || DEFAULT_ACCENT,
-        navbar: t.navbar || DEFAULT_NAVBAR,
-        font: t.font || null,
-      })),
-    };
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'bb-atelier-themes.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('Themes exported');
+  chrome.storage.local.get(['savedThemeFonts'], (localData) => {
+    const blobs = localData.savedThemeFonts || {};
+    chrome.storage.sync.get(['savedThemes'], (data) => {
+      const themes = data.savedThemes || {};
+      const exportData = {
+        version: 1,
+        themes: Object.entries(themes).map(([name, t]) => ({
+          name,
+          pageBg: t.pageBg || DEFAULT_BG,
+          accent: t.accent || DEFAULT_ACCENT,
+          navbar: t.navbar || DEFAULT_NAVBAR,
+          font: t.font || blobs[name] || null,
+        })),
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bb-atelier-themes.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Themes exported');
+    });
   });
 }
 
@@ -342,30 +350,39 @@ function importThemes(e) {
         return;
       }
       chrome.storage.sync.get(['savedThemes'], (existing) => {
-        const themes = existing.savedThemes || {};
-        let imported = 0;
-        data.themes.forEach((t) => {
-          if (
-            t.name &&
-            t.pageBg &&
-            t.accent &&
-            t.navbar &&
-            isValidHex(t.pageBg) &&
-            isValidHex(t.accent) &&
-            isValidHex(t.navbar)
-          ) {
-            themes[t.name] = {
-              pageBg: t.pageBg,
-              accent: t.accent,
-              navbar: t.navbar,
-              font: t.font || null,
-            };
-            imported++;
-          }
-        });
-        chrome.storage.sync.set({ savedThemes: themes }, () => {
-          renderSaved();
-          showToast(`Imported ${imported} theme(s)`);
+        chrome.storage.local.get(['savedThemeFonts'], (local) => {
+          const themes = existing.savedThemes || {};
+          const blobs = local.savedThemeFonts || {};
+          let imported = 0;
+          data.themes.forEach((t) => {
+            if (
+              t.name &&
+              t.pageBg &&
+              t.accent &&
+              t.navbar &&
+              isValidHex(t.pageBg) &&
+              isValidHex(t.accent) &&
+              isValidHex(t.navbar)
+            ) {
+              const isBlob = t.font && t.font.startsWith('data:');
+              themes[t.name] = {
+                pageBg: t.pageBg,
+                accent: t.accent,
+                navbar: t.navbar,
+                font: isBlob ? null : (t.font || null),
+                ...(isBlob ? { hasBlob: true } : {}),
+              };
+              if (isBlob) blobs[t.name] = t.font;
+              else delete blobs[t.name];
+              imported++;
+            }
+          });
+          chrome.storage.sync.set({ savedThemes: themes }, () => {
+            chrome.storage.local.set({ savedThemeFonts: blobs }, () => {
+              renderSaved();
+              showToast(`Imported ${imported} theme(s)`);
+            });
+          });
         });
       });
     } catch {

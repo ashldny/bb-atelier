@@ -67,18 +67,21 @@ function readFormToTheme() {
 function applyFormValues(theme) {
   _currentTheme = normalizeTheme(theme);
   const t = _currentTheme;
-  document.getElementById('drEnabled').checked = t.enabled;
-  document.getElementById('drDebug').checked = t.debug;
+  const drEnabled = document.getElementById('drEnabled');
+  if (!drEnabled) return;
+  drEnabled.checked = t.enabled;
+  const drDebug = document.getElementById('drDebug');
+  if (drDebug) drDebug.checked = t.debug;
   const modeRadio = document.querySelector(`input[name="drMode"][value="${t.mode}"]`);
   if (modeRadio) modeRadio.checked = true;
-  document.getElementById('drBrightness').value = String(t.brightness);
-  document.getElementById('drContrast').value = String(t.contrast);
-  document.getElementById('drSepia').value = String(t.sepia);
-  document.getElementById('drGrayscale').value = String(t.grayscale);
-  document.getElementById('drDarkBg').value = t.darkSchemeBackgroundColor;
-  document.getElementById('drDarkText').value = t.darkSchemeTextColor;
-  document.getElementById('drLightBg').value = t.lightSchemeBackgroundColor;
-  document.getElementById('drLightText').value = t.lightSchemeTextColor;
+  const bEl = document.getElementById('drBrightness'); if (bEl) bEl.value = String(t.brightness);
+  const cEl = document.getElementById('drContrast'); if (cEl) cEl.value = String(t.contrast);
+  const sEl = document.getElementById('drSepia'); if (sEl) sEl.value = String(t.sepia);
+  const gEl = document.getElementById('drGrayscale'); if (gEl) gEl.value = String(t.grayscale);
+  const dBg = document.getElementById('drDarkBg'); if (dBg) dBg.value = t.darkSchemeBackgroundColor;
+  const dTx = document.getElementById('drDarkText'); if (dTx) dTx.value = t.darkSchemeTextColor;
+  const lBg = document.getElementById('drLightBg'); if (lBg) lBg.value = t.lightSchemeBackgroundColor;
+  const lTx = document.getElementById('drLightText'); if (lTx) lTx.value = t.lightSchemeTextColor;
   const sb = document.getElementById('drScrollbar');
   const sel = document.getElementById('drSelection');
   if (sb) sb.value = t.scrollbarColor === 'auto' ? t.darkSchemeBackgroundColor : t.scrollbarColor;
@@ -90,23 +93,15 @@ function applyFormValues(theme) {
   if (visibleEl) visibleEl.value = joined;
   const styleEl = document.getElementById('drStyleSystemControls');
   if (styleEl) styleEl.checked = !!t.styleSystemControls;
-  document.getElementById('drCustomDomain').value = t.customDomain || '';
+  const domEl = document.getElementById('drCustomDomain'); if (domEl) domEl.value = t.customDomain || '';
   updateSliderLabels();
 }
 
 function updateSliderLabels() {
-  document.getElementById('drBrightnessVal').textContent = String(
-    document.getElementById('drBrightness').value
-  );
-  document.getElementById('drContrastVal').textContent = String(
-    document.getElementById('drContrast').value
-  );
-  document.getElementById('drSepiaVal').textContent = String(
-    document.getElementById('drSepia').value
-  );
-  document.getElementById('drGrayscaleVal').textContent = String(
-    document.getElementById('drGrayscale').value
-  );
+  const b = document.getElementById('drBrightness'); const bv = document.getElementById('drBrightnessVal'); if (b && bv) bv.textContent = String(b.value);
+  const c = document.getElementById('drContrast'); const cv = document.getElementById('drContrastVal'); if (c && cv) cv.textContent = String(c.value);
+  const s = document.getElementById('drSepia'); const sv = document.getElementById('drSepiaVal'); if (s && sv) sv.textContent = String(s.value);
+  const g = document.getElementById('drGrayscale'); const gv = document.getElementById('drGrayscaleVal'); if (g && gv) gv.textContent = String(g.value);
 }
 
 function scheduleSaveAndApply() {
@@ -170,6 +165,12 @@ function saveDomain() {
 }
 
 export function initDarkReaderControls() {
+  // Guard: popup no longer ships the standalone Dark Reader sliders UI.
+  // If none of the expected elements exist, become a no-op instead of crashing
+  // and breaking tabs/presets rendering.
+  if (!document.getElementById('drEnabled') && !document.getElementById('drBrightness')) {
+    return;
+  }
   // Load bbTheme from storage
   chrome.storage.sync.get(['bbTheme'], (data) => {
     const raw = data.bbTheme || {};
@@ -213,8 +214,8 @@ export function initDarkReaderControls() {
     if (el) el.addEventListener('input', scheduleSaveAndApply);
   });
 
-  document.getElementById('drEnabled').addEventListener('change', scheduleSaveAndApply);
-  document.getElementById('drDebug').addEventListener('change', scheduleSaveAndApply);
+  document.getElementById('drEnabled')?.addEventListener('change', scheduleSaveAndApply);
+  document.getElementById('drDebug')?.addEventListener('change', scheduleSaveAndApply);
 
   document.querySelectorAll('input[name="drMode"]').forEach((radio) => {
     radio.addEventListener('change', scheduleSaveAndApply);
@@ -233,8 +234,8 @@ export function initDarkReaderControls() {
   if (styleEl2) styleEl2.addEventListener('change', scheduleSaveAndApply);
 
   // Domain
-  document.getElementById('drSaveDomainBtn').addEventListener('click', saveDomain);
-  document.getElementById('drCustomDomain').addEventListener('keydown', (e) => {
+  document.getElementById('drSaveDomainBtn')?.addEventListener('click', saveDomain);
+  document.getElementById('drCustomDomain')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') saveDomain();
   });
 

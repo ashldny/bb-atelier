@@ -13,7 +13,7 @@ import { MAX_FONT_SIZE, validateFileSize } from '../utils/sanitization.js';
 import { DEFAULT_BG, DEFAULT_ACCENT, DEFAULT_NAVBAR } from '../utils/constants.js';
 import { PRESET_THEMES } from '../theme/presets.js';
 import { showToast } from '../utils/ui.js';
-import { updateContrastBadges } from './savedThemes.js';
+import { updateContrastBadges } from './contrastBadges.js';
 
 /**
  * Initialize the Theme tab UI (colour pickers, font, presets)

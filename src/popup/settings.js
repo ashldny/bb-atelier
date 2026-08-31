@@ -3,9 +3,9 @@
 //  Load and apply saved settings, restore last-used tab
 // ═════════════════════════════════════════════════════════
 
-import { toggleColorSection } from './theme.js';
-import { updateContrastBadges } from './savedThemes.js';
-import { applyFont, updateFontPreviewLive } from '../messaging/themeMessaging.js';
+import { toggleColorSection, updateFontPreviewLive } from './theme.js';
+import { updateContrastBadges } from './contrastBadges.js';
+import { applyFont } from '../messaging/themeMessaging.js';
 
 /**
  * Load settings from storage and restore the popup UI state
@@ -30,7 +30,7 @@ export function loadSettings() {
         // re-apply font to page + refresh popup preview
         try {
           applyFont(data.font);
-        } catch {}
+        } catch (e) { void e; }
         updateFontPreviewLive(data.font);
       }
 
