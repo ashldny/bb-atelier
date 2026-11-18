@@ -70,14 +70,13 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
   // --page-text-1 is the anchor (user-chosen or preset-specified).
   // Light mode: tiers lighten toward white. Dark mode: tiers darken toward black.
   // Same anchor, same percentages, opposite direction — CSS recomputes on mode class change.
-  lines.push(`/* ─── Derived text tiers (mode-scoped) ─── */
-:root, .mode-light {
-  --page-text-2: color-mix(in srgb, var(--page-text-1) 80%, white 20%);
-  --page-text-3: color-mix(in srgb, var(--page-text-1) 30%, white 70%);
-}
-.mode-dark {
-  --page-text-2: color-mix(in srgb, var(--page-text-1) 30%, black 70%);
-  --page-text-3: color-mix(in srgb, var(--page-text-1) 80%, black 20%);
+  lines.push(`/* ─── Derived text tiers ───
+   Secondary text steps toward the page background, never toward white or
+   black: on a light page it stays dark, on a dark page it stays light, and
+   both tiers keep at least ~4.5:1 contrast for any readable --page-text-1. */
+:root, .mode-light, .mode-dark {
+  --page-text-2: color-mix(in srgb, var(--page-text-1) 80%, var(--page-bg));
+  --page-text-3: color-mix(in srgb, var(--page-text-1) 64%, var(--page-bg));
 }`);
 
   // ─── Tier 2: Canonical Selectors (spec) ───
@@ -96,8 +95,9 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
   body:not(.is-in-mobile-app) .base-header .page-title {
     color: var(--page-text-1);
   }
+  /* Same hairline as the main/To Do divider, not a full-strength text line. */
   body:not(.is-in-mobile-app) .base-header {
-    border-bottom: 1px solid var(--page-text-1);
+    border-bottom: 1px solid var(--page-border);
   }
 }
 
@@ -144,8 +144,16 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
   }
 }
 
+/* Secondary buttons (e.g. "View my grade"): a soft fill one step from the
+   page, readable text, hairline border — never a text colour as the fill. */
 .button--secondary {
-  background-color: var(--page-text-2);
+  background-color: color-mix(in srgb, var(--page-bg), var(--page-text-1) 9%);
+  color: var(--page-text-1);
+  border: 1px solid var(--page-border);
+}
+.button--secondary:hover,
+.button--secondary:focus-visible {
+  background-color: color-mix(in srgb, var(--page-bg), var(--page-text-1) 16%);
   color: var(--page-text-1);
 }
 
@@ -162,8 +170,9 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
 /* Value changed from Color1 in earlier spec to Color2 here — this replaces the old assignment */
 
 /* PAGE TEXT/ICON COLOR 3 (lighten 70%) */
+/* Activity stream hover band: a quiet shadow of the page, not grey text. */
 .base-recent-activity .activity-stream .activity-group .stream-item:before {
-  background-color: color-mix(in srgb, var(--page-text-3) 85%, transparent);
+  background-color: var(--page-bg-hover);
 }
 
 /* ACCENT */
@@ -198,9 +207,53 @@ base-side-menu .MuiDrawer-paper .active :is(span, p, svg) {
 base-side-menu .MuiDrawer-paper a.active.base-navigation-button-content {
   background-color: var(--accent-surface) !important;
 }
+/* Hover: one step darker (or lighter, on a dark sidebar) than the sidebar. */
+base-side-menu .MuiDrawer-paper a.base-navigation-button-content:not(.active):is(:hover, :focus-visible) {
+  background-color: var(--navbar-hover) !important;
+  color: var(--navbar-text);
+}
 /* Institution logo artwork is white; darken it when the sidebar is light. */
 base-side-menu .themed-logo-background-primary-fill img {
   filter: var(--logo-filter);
+}
+
+/* PAGE HELP "?" button (Fluent UI inside <bb-ui-pagehelp>): its colour comes
+   from a CDN rule, so state hooks are aria-expanded / .is-expanded. */
+bb-ui-pagehelp .js-page-help .ms-Button.ms-Button--icon {
+  color: var(--page-text-2) !important;
+}
+bb-ui-pagehelp .js-page-help .ms-Button.ms-Button--icon:is(:hover, :focus-visible) {
+  color: var(--page-text-1) !important;
+}
+bb-ui-pagehelp .js-page-help .ms-Button.ms-Button--icon:is([aria-expanded='true'], .is-expanded) {
+  color: var(--accent-on-page) !important;
+}
+
+/* INSTITUTION PAGE banner: the title sits on the hero photo — keep it the
+   site's own white. The logo's dark disc is baked into the uploaded image,
+   so content/logoTint.js adds a knockout layer; here the disc takes the
+   sidebar colour and the crest the sidebar text colour. */
+.banner .banner__title,
+.banner .banner__title-text {
+  color: #ffffff !important;
+}
+.banner__logo:has(> .bb-logo-knockout) {
+  position: relative;
+  background-image: none !important;
+  background-color: var(--navbar-bg) !important;
+}
+.bb-logo-ink {
+  flood-color: var(--navbar-text);
+}
+.bb-logo-knockout {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: url(#bb-logo-knockout-filter);
+  pointer-events: none;
 }
 
 /* CALENDAR (Tier 2: literal colours in the cross-origin CDN stylesheet,

@@ -14,6 +14,7 @@ import {
   readableOn,
   sidebarShade,
   borderShade,
+  shade,
 } from './colorUtils.js';
 
 /**
@@ -39,14 +40,13 @@ export function derivePalette(pageBg, accent, navbarChoice, pageText) {
   const textHint = dark ? mix(bg, '#ffffff', 0.3) : mix(bg, '#000000', 0.2);
 
   const useNavbar = Boolean(navbar);
-  const primaryMain = useNavbar ? navbar : textPrimary;
-  const primaryContrast = useNavbar ? contrastText(navbar) : dark ? '#262626' : '#ffffff';
-  const primaryLight = useNavbar
-    ? lighten(navbar, 25)
-    : dark
-      ? lighten(bg, 30)
-      : lighten(primaryMain, 40);
-  const primaryDark = useNavbar ? darken(navbar, 15) : dark ? '#ffffff' : darken(primaryMain, 15);
+  // Blackboard uses palette-primary as its main *ink* (icons, help button,
+  // outlined controls) on the page — not as the sidebar fill. Tint it toward
+  // the sidebar hue, but keep it strongly readable on the page background.
+  const primaryMain = readableOn(mix(textPrimary, navbar, 0.25), bg, 7);
+  const primaryContrast = contrastText(primaryMain);
+  const primaryLight = mix(primaryMain, bg, 0.35);
+  const primaryDark = mix(primaryMain, dark ? '#ffffff' : '#000000', 0.2);
 
   const borderMain = dark ? lighten(bg, 35) : darken(bg, 15);
   const borderDark = dark ? lighten(bg, 55) : darken(bg, 35);
@@ -136,8 +136,7 @@ export function derivePalette(pageBg, accent, navbarChoice, pageText) {
   const pageText1 = pageText || textPrimary;
 
   // Prefer the page text on the sidebar when it reads well; otherwise black/white.
-  const navbarText =
-    contrastRatio(pageText1, navbarBg) >= 4.5 ? pageText1 : contrastText(navbarBg);
+  const navbarText = contrastRatio(pageText1, navbarBg) >= 4.5 ? pageText1 : contrastText(navbarBg);
   const accentText = brandContrast;
 
   // ─── Static tokens (grade colors, greys, common) ───
@@ -223,6 +222,9 @@ export function derivePalette(pageBg, accent, navbarChoice, pageText) {
     '--accent-surface': readableOn(accent, '#ffffff'),
     '--navbar-text-muted': mix(navbarText, navbarBg, 0.25),
     '--page-border': borderShade(bg),
+    // Subtle hover tints: a step away from the surface, same hue.
+    '--page-bg-hover': shade(bg, dark ? 0.05 : -0.045),
+    '--navbar-hover': shade(navbarBg, isDark(navbarBg) ? 0.07 : -0.07),
     // Blackboard's logo artwork is white; darken it on a light sidebar.
     '--logo-filter': isDark(navbarBg) ? 'none' : 'brightness(0) opacity(0.85)',
     // Brand

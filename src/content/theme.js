@@ -7,6 +7,7 @@ import { purgeDarkReaderCss } from '../utils/cssSanitizer.js';
 import { hardenedFetch } from '../utils/fetchGuard.js';
 import { isDark, contrastText } from '../theme/colorUtils.js';
 import { createRuleRemapper } from './ruleRemapper.js';
+import { createLogoTint } from './logoTint.js';
 
 export function createThemeController(styles) {
   let signature = '';
@@ -17,6 +18,7 @@ export function createThemeController(styles) {
   let active = false;
   let previewing = false;
   const remapper = createRuleRemapper(styles);
+  const logoTint = createLogoTint();
 
   function stopDarkReader() {
     if (activeDarkReader) disable();
@@ -52,11 +54,13 @@ export function createThemeController(styles) {
     if (!enabled || !palette.customMode) {
       stopDarkReader();
       remapper.stop();
+      logoTint.stop();
       styles.remove('bb-custom-theme');
       return;
     }
     if (engine === 'darkreader' && options.enabled) {
       remapper.stop();
+      logoTint.stop();
       styles.remove('bb-custom-theme');
       setFetchMethod(hardenedFetch);
       const dynamic = {
@@ -80,6 +84,7 @@ export function createThemeController(styles) {
       );
       styles.set('bb-custom-theme', buildFullThemeCss(overrides, darkOverrides, staticVars));
       remapper.start();
+      logoTint.start();
     }
   }
 
@@ -111,6 +116,7 @@ export function createThemeController(styles) {
       clearTimeout(previewTimer);
       stopDarkReader();
       remapper.stop();
+      logoTint.stop();
       styles.remove('bb-custom-theme');
     },
   };

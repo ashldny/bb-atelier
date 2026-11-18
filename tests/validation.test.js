@@ -100,7 +100,8 @@ test('palette tokens honor explicit text and black sidebars in both modes', () =
     assert.equal(tokens['--palette-text-primary'], '#eeeedd');
     assert.equal(tokens['--color-text-primary'], '#eeeedd');
     assert.equal(tokens['--navbar-bg'], '#000000');
-    assert.equal(tokens['--palette-primary-main'], '#000000');
+    // palette-primary is Blackboard's ink on the page, so it must stay readable there.
+    assert.ok(contrastRatio(tokens['--palette-primary-main'], '#1a1a1a') >= 7);
     assert.ok(contrastRatio(tokens['--palette-text-secondary'], '#1a1a1a') >= 4.5);
   }
 });

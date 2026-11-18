@@ -117,3 +117,22 @@ test('gradient colour stops are remapped; image URLs are left alone', () => {
   assert.match(out, /var\(--page-bg\) 50%, var\(--page-bg\) 100%\)$/);
   assert.equal(remapValue('background-image', 'url("a.png")'), null);
 });
+
+test('page ink and hover tints stay readable and subtle in light and dark themes', () => {
+  for (const [bg, text] of [
+    ['#ffffff', null],
+    ['#fefce8', null],
+    ['#1a1a1a', '#e0e0e0'],
+    ['#0f172a', '#cbd5e1'],
+  ]) {
+    const { overrides: t } = derivePalette(bg, '#670d2f', null, text);
+    // Blackboard draws icons and the help button in palette-primary on the page.
+    assert.ok(contrastRatio(t['--palette-primary-main'], bg) >= 7, `${bg} ink`);
+    // Hover tints are a visible but gentle step from their surface.
+    const pageStep = contrastRatio(t['--page-bg-hover'], bg);
+    const navStep = contrastRatio(t['--navbar-hover'], t['--navbar-bg']);
+    assert.ok(pageStep > 1.05 && pageStep < 1.6, `${bg} page hover ${pageStep}`);
+    assert.ok(navStep > 1.05 && navStep < 1.8, `${bg} sidebar hover ${navStep}`);
+    assert.ok(contrastRatio(t['--navbar-text'], t['--navbar-hover']) >= 4.5, `${bg} hover text`);
+  }
+});
