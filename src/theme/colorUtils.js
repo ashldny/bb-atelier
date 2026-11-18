@@ -160,3 +160,76 @@ export function readableOn(hex, bgHex, min = 4.5) {
   }
   return target;
 }
+
+/**
+ * Convert a hex colour to HSL (h 0-360, s 0-1, l 0-1).
+ * @param {string} hex
+ * @returns {{h: number, s: number, l: number}}
+ */
+export function hexToHsl(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  const [rn, gn, bn] = [r / 255, g / 255, b / 255];
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  if (max === min) return { h: 0, s: 0, l };
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h;
+  if (max === rn) h = (gn - bn) / d + (gn < bn ? 6 : 0);
+  else if (max === gn) h = (bn - rn) / d + 2;
+  else h = (rn - gn) / d + 4;
+  return { h: h * 60, s, l };
+}
+
+/**
+ * Convert HSL back to hex.
+ * @param {{h: number, s: number, l: number}} hsl
+ * @returns {string}
+ */
+export function hslToHex({ h, s, l }) {
+  const k = (n) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return rgbToHex(f(0) * 255, f(8) * 255, f(4) * 255);
+}
+
+/**
+ * Shift a colour's lightness while keeping its hue and saturation, so
+ * derived surfaces stay in the same monochrome family.
+ * @param {string} hex
+ * @param {number} delta - lightness change, -1..1
+ * @returns {string}
+ */
+export function shade(hex, delta) {
+  const { h, s, l } = hexToHsl(hex);
+  const next = Math.min(1, Math.max(0, l + delta));
+  // Keep chroma (perceived colourfulness) rather than saturation, otherwise
+  // a barely-tinted page like #f0fdf4 turns into a vivid mint when darkened.
+  const chroma = s * (1 - Math.abs(2 * l - 1));
+  const room = 1 - Math.abs(2 * next - 1);
+  const sat = room > 0 ? Math.min(s, chroma / room) : 0;
+  return hslToHex({ h, s: sat, l: next });
+}
+
+/**
+ * The automatic sidebar colour: a darker member of the page background's
+ * own hue family. Light pages get a clearly darker tint; dark pages sink
+ * toward black without losing their hue.
+ * @param {string} pageBg
+ * @returns {string}
+ */
+export function sidebarShade(pageBg) {
+  const { l } = hexToHsl(pageBg);
+  return isDark(pageBg) ? shade(pageBg, -Math.min(l * 0.45, 0.08)) : shade(pageBg, -0.13);
+}
+
+/**
+ * Hairline colour for borders and dividers: the page background nudged
+ * toward its contrasting side, hue preserved.
+ * @param {string} pageBg
+ * @returns {string}
+ */
+export function borderShade(pageBg) {
+  return shade(pageBg, isDark(pageBg) ? 0.14 : -0.16);
+}

@@ -3,6 +3,7 @@ import { initTheme } from './theme.js';
 import { initSaved } from './savedThemes.js';
 import { initCourseCovers } from './courseCovers.js';
 import { initSettingsTab } from './settingsTab.js';
+import { initCoverageAudit } from './coverageAudit.js';
 import { DEFAULT_SETTINGS } from '../utils/constants.js';
 import { setToastPreference, showToast } from '../utils/ui.js';
 import { getTargetTab, sendToTab } from '../messaging/themeMessaging.js';
@@ -36,6 +37,7 @@ async function boot() {
     initTheme(sync, local);
     initSaved();
     initSettingsTab(sync);
+    initCoverageAudit();
     // Course discovery runs on demand when its tab opens.
     await initCourseCovers();
     initTabs(local.activeTab || stored.activeTab);

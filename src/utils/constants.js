@@ -12,7 +12,8 @@ export const DEFAULT_SETTINGS = {
   customMode: true,
   pageBg: DEFAULT_BG,
   accent: DEFAULT_ACCENT,
-  navbar: DEFAULT_NAVBAR,
+  // null = derive a darker shade of pageBg (see colorUtils.sidebarShade)
+  navbar: null,
   pageText: DEFAULT_PAGETEXT,
 };
 

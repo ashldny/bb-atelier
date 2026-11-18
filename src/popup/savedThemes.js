@@ -1,6 +1,7 @@
 import { applyCurrentTheme, readPalette, setPaletteInputs } from './theme.js';
 import { restoreFontControl } from './fonts.js';
 import { derivePalette } from '../theme/palette.js';
+import { sidebarShade } from '../theme/colorUtils.js';
 import { previewThemeOnBb, restoreThemeOnBb } from '../messaging/themeMessaging.js';
 import { escapeHtml, validateFileSize } from '../utils/sanitization.js';
 import { showToast, debounce } from '../utils/ui.js';
@@ -103,7 +104,7 @@ export async function renderSaved() {
     .map(
       ([name, theme]) => `<div class="saved-row" data-name="${escapeHtml(name)}">
     <button class="load-saved" type="button" aria-label="Apply ${escapeHtml(name)}">
-      <span class="saved-swatches" aria-hidden="true">${[theme.pageBg, theme.navbar, theme.accent].map((color) => `<span class="mini-swatch" style="background:${escapeHtml(color)}"></span>`).join('')}</span>
+      <span class="saved-swatches" aria-hidden="true">${[theme.pageBg, theme.navbar || sidebarShade(theme.pageBg), theme.accent].map((color) => `<span class="mini-swatch" style="background:${escapeHtml(color)}"></span>`).join('')}</span>
       <span class="saved-name">${escapeHtml(name)}</span>
     </button>
     <button class="btn tiny edit-saved" type="button" aria-label="Edit ${escapeHtml(name)}">Edit</button>

@@ -154,6 +154,11 @@
               >
             </div>
             <label class="settings-toggle"
+              ><input type="checkbox" id="autoNavbarToggle" /><span
+                >Match sidebar to background</span
+              ></label
+            >
+            <label class="settings-toggle"
               ><input type="checkbox" id="autoTextToggle" /><span
                 >Choose readable text automatically</span
               ></label
@@ -336,6 +341,18 @@
               >Show save confirmations</span
             ></label
           >
+        </section>
+        <section class="section">
+          <h2>Theme coverage</h2>
+          <p class="hint">
+            Find parts of this Blackboard page that still use Blackboard’s own colours.
+          </p>
+          <div class="button-row">
+            <button class="btn secondary" id="auditThemeBtn">Check this page</button
+            ><button class="btn quiet" id="copyAuditBtn" hidden>Copy report</button>
+          </div>
+          <p id="auditSummary" class="settings-status" role="status"></p>
+          <ul id="auditList" class="audit-list"></ul>
         </section>
         <section class="section">
           <h2>Backup &amp; reset</h2>

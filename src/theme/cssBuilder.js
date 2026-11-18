@@ -170,9 +170,38 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
 .color-selection-live-mode.color-selection-preview-bb-close .bb-close,
 .color-selection-live-mode .active.base-navigation-button-content,
 .color-selection-live-mode .active .integration-navigation-button-content {
-  background-color: var(--accent) !important;
+  background-color: var(--accent-surface) !important;
 }
 
+
+/* SIDEBAR (Tier 2: stable hooks — the <base-side-menu> element, MUI's
+   .MuiDrawer-paper and Blackboard's .themed-logo-* class. The drawer's own
+   colours live in hashed JSS rules, so these selectors out-rank them by
+   specificity rather than by guessing class names.) */
+base-side-menu .MuiDrawer-paper,
+base-side-menu .themed-logo-background-primary-fill {
+  background-color: var(--navbar-bg);
+  border-color: var(--navbar-bg-darker);
+}
+/* Sidebar items: literal #e5e5e5 in a hashed rule assumes a dark drawer. */
+base-side-menu .MuiDrawer-paper :is(a, button, p, span, h2, h3, li) {
+  color: var(--navbar-text);
+}
+base-side-menu .MuiDrawer-paper .themed-background-primary-alt-fill-only {
+  color: var(--navbar-text-muted);
+}
+/* Active item sits on the accent fill, which always keeps white text legible. */
+base-side-menu .MuiDrawer-paper .active,
+base-side-menu .MuiDrawer-paper .active :is(span, p, svg) {
+  color: #ffffff;
+}
+base-side-menu .MuiDrawer-paper a.active.base-navigation-button-content {
+  background-color: var(--accent-surface) !important;
+}
+/* Institution logo artwork is white; darken it when the sidebar is light. */
+base-side-menu .themed-logo-background-primary-fill img {
+  filter: var(--logo-filter);
+}
 
 /* CALENDAR (Tier 2: literal colours in the cross-origin CDN stylesheet,
    which Tier 3 cannot read; these class names are stable, not hashed) */

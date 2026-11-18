@@ -3,19 +3,32 @@
 //  Derives ALL theme tokens from just 3 colors (bg + accent + navbar)
 // ═════════════════════════════════════════════════════════
 
-import { isDark, lighten, darken, mix, contrastText, brighten, readableOn } from './colorUtils.js';
+import {
+  isDark,
+  lighten,
+  darken,
+  mix,
+  contrastText,
+  contrastRatio,
+  brighten,
+  readableOn,
+  sidebarShade,
+  borderShade,
+} from './colorUtils.js';
 
 /**
  * Generate a full palette object from user-chosen colors
  *
  * @param {string} pageBg   - Page background hex
  * @param {string} accent   - Brand / accent hex
- * @param {string} navbar   - Navbar / sidebar hex
+ * @param {string|null} navbar - Sidebar hex, or null to derive a darker shade of pageBg
  * @param {string} [pageText] - Optional user-chosen page text color (overrides auto-derive)
  * @returns {{ overrides: object, darkOverrides: object, staticVars: string }}
  */
-export function derivePalette(pageBg, accent, navbar, pageText) {
+export function derivePalette(pageBg, accent, navbarChoice, pageText) {
   const dark = isDark(pageBg);
+  // Sidebar defaults to a monochrome, darker member of the page's own hue.
+  const navbar = navbarChoice || sidebarShade(pageBg);
 
   // ─── Base tones ───
   const bg = pageBg;
@@ -122,7 +135,9 @@ export function derivePalette(pageBg, accent, navbar, pageText) {
   // --page-text-1 stays fixed; tiers flip direction via .mode-light/.mode-dark
   const pageText1 = pageText || textPrimary;
 
-  const navbarText = primaryContrast;
+  // Prefer the page text on the sidebar when it reads well; otherwise black/white.
+  const navbarText =
+    contrastRatio(pageText1, navbarBg) >= 4.5 ? pageText1 : contrastText(navbarBg);
   const accentText = brandContrast;
 
   // ─── Static tokens (grade colors, greys, common) ───
@@ -203,6 +218,13 @@ export function derivePalette(pageBg, accent, navbar, pageText) {
     '--navbar-text': navbarText,
     '--accent': accent,
     '--accent-text': accentText,
+    // Accent as text on the page, and as a fill that keeps white text readable.
+    '--accent-on-page': linkActive,
+    '--accent-surface': readableOn(accent, '#ffffff'),
+    '--navbar-text-muted': mix(navbarText, navbarBg, 0.25),
+    '--page-border': borderShade(bg),
+    // Blackboard's logo artwork is white; darken it on a light sidebar.
+    '--logo-filter': isDark(navbarBg) ? 'none' : 'brightness(0) opacity(0.85)',
     // Brand
     '--palette-mode': dark ? 'dark' : 'light',
     '--palette-brand-main': brandMain,

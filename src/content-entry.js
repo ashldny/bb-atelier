@@ -3,6 +3,7 @@ import { createStyleHost } from './content/styles.js';
 import { createThemeController } from './content/theme.js';
 import { createCoverController, scrapeCourses } from './content/covers.js';
 import { applyFont } from './content/fonts.js';
+import { auditTheme } from './content/themeAudit.js';
 import { DEFAULT_SETTINGS, PALETTE_KEYS } from './utils/constants.js';
 import { isValidFont } from './utils/sanitization.js';
 import { normalizeCoverEntry } from './utils/covers.js';
@@ -96,6 +97,7 @@ function start() {
     if (action === 'ping') return { success: true, enabled: enabled(), engine: theme.engine };
     if (action === 'getCourses') return scrapeCourses();
     if (action === 'getEngine') return { success: true, engine: theme.engine };
+    if (action === 'auditTheme') return { success: true, enabled: enabled(), ...auditTheme() };
     if (action === 'previewThemeCSS') {
       if (typeof message.css !== 'string') throw new Error('Invalid theme CSS');
       theme.preview(message.css);
@@ -153,6 +155,7 @@ function start() {
     'ping',
     'getCourses',
     'getEngine',
+    'auditTheme',
     'applyThemeCSS',
     'previewThemeCSS',
     'restoreTheme',

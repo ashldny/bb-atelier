@@ -49,6 +49,7 @@ Current canonical messages (popup → content):
 - `applyFont { font }`
 - `applyCover { courseId, imageUrl, position }` / `removeCover { courseId }`
 - `enableAll` / `disableAll`
+- `auditTheme` → `{ checked, issues[{ path, prop, color, source, count }] }` (Settings → Theme coverage)
 
 Content must `sendResponse({ success: true })` and `return true`.
 

@@ -1,6 +1,6 @@
 import { normalizePalette } from '../theme/settings.js';
 import { derivePalette } from '../theme/palette.js';
-import { contrastText, isDark } from '../theme/colorUtils.js';
+import { contrastText, isDark, sidebarShade } from '../theme/colorUtils.js';
 import { PRESET_THEMES } from '../theme/presets.js';
 import { sendToTab, previewThemeOnBb, restoreThemeOnBb } from '../messaging/themeMessaging.js';
 import { showToast, debounce } from '../utils/ui.js';
@@ -25,7 +25,9 @@ export function readPalette() {
   return normalizePalette({
     pageBg: document.getElementById('pageBgPicker').value,
     accent: document.getElementById('activeTabGlowPicker').value,
-    navbar: document.getElementById('navbarPicker').value,
+    navbar: document.getElementById('autoNavbarToggle').checked
+      ? null
+      : document.getElementById('navbarPicker').value,
     pageText: document.getElementById('autoTextToggle').checked
       ? null
       : document.getElementById('pageTextPicker').value,
@@ -36,7 +38,9 @@ export function setPaletteInputs(value) {
   palette = normalizePalette(value);
   document.getElementById('pageBgPicker').value = palette.pageBg;
   document.getElementById('activeTabGlowPicker').value = palette.accent;
-  document.getElementById('navbarPicker').value = palette.navbar;
+  document.getElementById('navbarPicker').value = palette.navbar || sidebarShade(palette.pageBg);
+  document.getElementById('autoNavbarToggle').checked = palette.navbar === null;
+  document.getElementById('navbarPicker').disabled = palette.navbar === null;
   document.getElementById('pageTextPicker').value =
     palette.pageText || contrastText(palette.pageBg);
   document.getElementById('autoTextToggle').checked = palette.pageText === null;
@@ -50,9 +54,11 @@ function highlightPreset() {
   document.querySelectorAll('.preset-card').forEach((button) => {
     const preset = PRESET_THEMES[Number(button.dataset.index)];
     const selected =
-      ['pageBg', 'accent', 'navbar'].every(
+      ['pageBg', 'accent'].every(
         (key) => current[key].toLowerCase() === preset[key].toLowerCase()
-      ) && current.pageText === (preset.pageText?.toLowerCase() || null);
+      ) &&
+      current.navbar === (preset.navbar?.toLowerCase() || null) &&
+      current.pageText === (preset.pageText?.toLowerCase() || null);
     button.classList.toggle('active', selected);
     button.setAttribute('aria-pressed', String(selected));
   });
@@ -87,7 +93,7 @@ function renderPresets() {
           preset,
           index,
         }) => `<button type="button" class="preset-card" data-index="${index}" aria-pressed="false">
-        <span class="preset-mini" aria-hidden="true" style="--mini-bg:${escapeHtml(preset.pageBg)};--mini-nav:${escapeHtml(preset.navbar)};--mini-accent:${escapeHtml(preset.accent)};--mini-text:${escapeHtml(preset.pageText || contrastText(preset.pageBg))}">
+        <span class="preset-mini" aria-hidden="true" style="--mini-bg:${escapeHtml(preset.pageBg)};--mini-nav:${escapeHtml(preset.navbar || sidebarShade(preset.pageBg))};--mini-accent:${escapeHtml(preset.accent)};--mini-text:${escapeHtml(preset.pageText || contrastText(preset.pageBg))}">
           <span class="mini-nav"><span class="mini-nav-item"></span></span>
           <span class="mini-page"><span class="mini-title"></span><span class="mini-line"></span><span class="mini-line short"></span></span>
         </span><span class="preset-name">${escapeHtml(preset.name)}</span>
@@ -97,7 +103,7 @@ function renderPresets() {
       .join('');
     grid.querySelectorAll('.preset-card').forEach((card) => {
       const preset = PRESET_THEMES[Number(card.dataset.index)];
-      const value = { ...preset, pageText: preset.pageText || null };
+      const value = { ...preset, navbar: preset.navbar || null, pageText: preset.pageText || null };
       card.addEventListener('click', () => applyCurrentTheme(value, { notify: true }));
       card.addEventListener('mouseenter', () => {
         if (document.getElementById('masterToggle').checked) preview(value);
@@ -142,6 +148,9 @@ export function initTheme(sync, local) {
       if (id === 'pageBgPicker' && document.getElementById('autoTextToggle').checked) {
         document.getElementById('pageTextPicker').value = contrastText(picker.value);
       }
+      if (id === 'pageBgPicker' && document.getElementById('autoNavbarToggle').checked) {
+        document.getElementById('navbarPicker').value = sidebarShade(picker.value);
+      }
       updateContrastBadges();
       highlightPreset();
       preview(readPalette());
@@ -151,4 +160,5 @@ export function initTheme(sync, local) {
     picker.addEventListener('change', () => applyCurrentTheme());
   }
   document.getElementById('autoTextToggle').addEventListener('change', () => applyCurrentTheme());
+  document.getElementById('autoNavbarToggle').addEventListener('change', () => applyCurrentTheme());
 }

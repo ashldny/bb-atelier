@@ -7,7 +7,8 @@ export function normalizePalette(raw = {}) {
     customMode: raw.customMode !== false,
     pageBg: color('pageBg'),
     accent: color('accent'),
-    navbar: color('navbar'),
+    // null explicitly requests the automatic sidebar shade.
+    navbar: raw.navbar == null ? null : color('navbar'),
     // null explicitly requests automatic text color; missing values keep the default.
     pageText: raw.pageText == null ? null : color('pageText'),
   };

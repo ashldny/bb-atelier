@@ -6,10 +6,24 @@ export function createStyleHost() {
   const headObserver = new MutationObserver(scheduleRepair);
   const rootObserver = new MutationObserver(scheduleRepair);
 
+  // Blackboard injects its institution theme as a <style> inside
+  // <bb-theme-css-injector> in the body. Anything in <head> loses to it, so
+  // when the last site stylesheet lives in the body, ours go to the body's end.
+  function lastSiteSheetInBody() {
+    const sheets = document.styleSheets;
+    for (let i = sheets.length - 1; i >= 0; i--) {
+      const node = sheets[i].ownerNode;
+      if (!node || styles.has(node.id) || node.classList?.contains('darkreader')) continue;
+      return document.body?.contains(node) ? node : null;
+    }
+    return null;
+  }
+
   function repair() {
     scheduled = false;
     headObserver.disconnect();
-    const target = document.head || document.documentElement;
+    const bodySheet = lastSiteSheetInBody();
+    const target = bodySheet ? document.body : document.head || document.documentElement;
     if (!target) return;
     for (const [id, css] of styles) {
       let style = document.getElementById(id);
@@ -21,6 +35,8 @@ export function createStyleHost() {
       // Reorder only when a site stylesheet was inserted after our styles.
       if (
         style.parentNode !== target ||
+        (bodySheet &&
+          !(bodySheet.compareDocumentPosition(style) & Node.DOCUMENT_POSITION_FOLLOWING)) ||
         [...target.children]
           .slice([...target.children].indexOf(style) + 1)
           .some(
@@ -33,7 +49,7 @@ export function createStyleHost() {
         target.appendChild(style);
       }
     }
-    if (head !== target) head = target;
+    head = document.head || document.documentElement;
     headObserver.observe(head, { childList: true, subtree: true, characterData: true });
   }
 

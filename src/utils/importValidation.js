@@ -1,4 +1,4 @@
-import { DEFAULT_BG, DEFAULT_ACCENT, DEFAULT_NAVBAR } from '../utils/constants.js';
+import { DEFAULT_BG, DEFAULT_ACCENT } from '../utils/constants.js';
 import { isValidHex } from '../utils/ui.js';
 import { isValidFont, sanitizeUrl } from '../utils/sanitization.js';
 import { normalizePalette } from '../theme/settings.js';
@@ -8,12 +8,12 @@ import { normalizeCoverEntry } from '../utils/covers.js';
 const isRecord = (value) => value && typeof value === 'object' && !Array.isArray(value);
 
 export function validateSavedTheme(raw) {
-  if (!isRecord(raw) || !['pageBg', 'accent', 'navbar'].every((key) => isValidHex(raw[key])))
-    return null;
+  if (!isRecord(raw) || !['pageBg', 'accent'].every((key) => isValidHex(raw[key]))) return null;
+  if (raw.navbar != null && !isValidHex(raw.navbar)) return null;
   if (raw.pageText != null && !isValidHex(raw.pageText)) return null;
   if (raw.font != null && !isValidFont(raw.font)) return null;
   return {
-    ...normalizePalette({ ...raw, pageText: raw.pageText ?? null }),
+    ...normalizePalette({ ...raw, pageText: raw.pageText ?? null, navbar: raw.navbar ?? null }),
     customMode: true,
     font: raw.font || null,
   };
@@ -41,7 +41,7 @@ export function validateSettingsImport(raw) {
     ...normalizePalette({
       pageBg: DEFAULT_BG,
       accent: DEFAULT_ACCENT,
-      navbar: DEFAULT_NAVBAR,
+      navbar: null,
       ...source,
     }),
     masterEnabled: source.masterEnabled !== false,
