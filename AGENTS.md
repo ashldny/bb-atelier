@@ -38,6 +38,7 @@
 2. If value is `var(--palette-*, fallback)` → **fix `src/theme/palette.js` overrides** (Tier 1). Do NOT add a Tier 2 rule.
 3. Only if value is a literal `hex/rgb` with **no** `var()` → add a Tier 2 rule in `cssBuilder.js` with a comment noting which element it targets.
 4. Before writing the selector, check specificity & state: `:hover`, `:focus`, `.active`, `.Mui-selected` — your override must match that state or explicitly exclude it.
+5. **Never target hashed classes** (`.muiltr-*`, `.makeStyles*-0-2-N`, `.css-N`, `.name_abc123`). They change per release and per page load. Literal colours in those rules are handled by **Tier 3**: `src/theme/colorRemap.js` (pure mapping) + `src/content/ruleRemapper.js` (walks same-origin/CSS-in-JS stylesheets and emits mirror rules into `#bb-theme-remap`). Tier 3 cannot read the cross-origin CDN stylesheets, so stable-class gaps there (e.g. calendar) still get a Tier 2 rule.
 
 ## 4. Messaging Contract
 
@@ -76,7 +77,8 @@ manifest.json              # MV3 manifest (permissions, host_permissions, CSP)
 popup.html / style.css     # Popup shell (420px, 3 tabs)
 src/content-entry.js       # Content script source (dual-engine stub)
 src/popup/{popup,tabs,theme,savedThemes,courseCovers,settings}.js
-src/theme/{presets,palette,cssBuilder,colorUtils}.js
+src/theme/{presets,palette,cssBuilder,colorUtils,colorRemap}.js
+src/content/{styles,theme,ruleRemapper,covers,fonts}.js
 src/messaging/themeMessaging.js
 src/utils/{constants,sanitization,ui}.js
 Fonts/ / icons/            # Static assets (do not edit without design review)

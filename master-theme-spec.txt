@@ -1,0 +1,241 @@
+MASTER THEME SPEC — compiled from all rounds, with all open decisions resolved 
+and confirmed. This supersedes prior partial specs. Ready for implementation.
+
+=====================================================================
+TOKEN TABLE
+=====================================================================
+--page-bg             (user)
+--page-bg-lighter      (derived from --page-bg)   kept — used by filter input bg
+--page-bg-darker       (derived from --page-bg)   kept for any future use
+--page-text-1          (user)   
+--page-text-2          (derived from --page-text-1 — see MODE-AWARE DERIVATION below)
+--page-text-3          (derived from --page-text-1 — see MODE-AWARE DERIVATION below)
+--accent               (user)
+
+⚑ MODE-AWARE DERIVATION (confirmed this round):
+Text tier meaning (darkest -> lightest) is fixed: Color1 is always the anchor 
+the user picks, Color2 is always the middle tier, Color3 is always the most 
+extreme tier — but which DIRECTION "extreme" points depends on preset mode:
+
+  LIGHT MODE presets (typically dark text on light background):
+    --page-text-1 = darkest  (user-picked, the anchor)
+    --page-text-2 = middle   (lightened from Color1)
+    --page-text-3 = lightest (lightened further from Color1)
+
+  DARK MODE presets (typically light text on dark background):
+    --page-text-1 = lightest (user-picked, the anchor)
+    --page-text-2 = middle   (darkened from Color1)
+    --page-text-3 = darkest  (darkened further from Color1)
+
+Same tier percentages in both directions (20% / 70%), only the mix target 
+changes (white vs. black). Implementation must be scoped per mode class, 
+matching the existing :root/.mode-light vs .mode-dark pattern already used 
+elsewhere in the codebase:
+
+  :root, .mode-light {
+    --page-text-2: color-mix(in srgb, var(--page-text-1) 80%, white 20%);
+    --page-text-3: color-mix(in srgb, var(--page-text-1) 30%, white 70%);
+  }
+  .mode-dark {
+    --page-text-2: color-mix(in srgb, var(--page-text-1) 80%, black 20%);
+    --page-text-3: color-mix(in srgb, var(--page-text-1) 30%, black 70%);
+  }
+
+ASSUMPTION: percentages stay identical (20%/70%) in both directions — only 
+the white/black mix target flips. If dark mode should use different 
+percentages (darkening 20%/70% may read as too subtle or too harsh compared 
+to lightening the same amount, depending on the anchor color), flag it and 
+I'll adjust. Also note: every selector mapped to --page-text-2/--page-text-3 
+in the SELECTOR LIST below is unaffected by this — the selector-to-tier 
+mapping doesn't change, only how each tier's value is computed per mode.
+
+CARRIED FORWARD, UNCHANGED (navbar left untouched per instruction):
+--navbar-bg           (user)
+--navbar-bg-darker     (derived from --navbar-bg)
+--navbar-text          (derived from --navbar-bg)
+
+RESOLVED DECISIONS (previously flagged, now confirmed):
+1. --page-bg-lighter / --page-bg-darker are KEPT, not retired. The Filter 
+   button's outer background (#streams-filter .MuiInputBase-root) still uses 
+   --page-bg-lighter. Only the specific gradient-removal instruction below 
+   uses flat --page-bg, per explicit instruction for that one selector.
+2. Accent-text color override on the active tab button is REMOVED. That 
+   selector now sets only background-color: var(--accent) — no color override.
+3. The 85% alpha on the stream-item hover background IS preserved, via 
+   color-mix layered on top of --page-text-3.
+4. "Show All" text background-color -> var(--page-bg) (flat, confirmed).
+5. #streams-filter-label background-color -> var(--page-bg) (confirmed).
+
+=====================================================================
+SELECTOR LIST
+=====================================================================
+
+--- PAGE BACKGROUND ---
+
+.base-header {
+  background-color: var(--page-bg);
+}
+
+--- PAGE TEXT/ICON COLOR 1 (darkest) ---
+
+@media only screen and (min-width: 64em) {
+  body:not(.is-in-mobile-app) .base-header .page-title {
+    color: var(--page-text-1);
+  }
+  body:not(.is-in-mobile-app) .base-header {
+    border-bottom: 1px solid var(--page-text-1);
+  }
+}
+
+.base-recent-activity .activity-stream .activity-group .stream-item .element-details .context a {
+  color: var(--page-text-1);
+}
+
+.element-card .element-details .name a {
+  color: var(--page-text-1);
+}
+/* SUPERSEDES earlier broad rule: .stream-item .js-title-link, [class*="stream-item"] .js-title-link */
+
+.MuiSvgIcon-root.MuiSvgIcon-colorPrimary.MuiSvgIcon-fontSizeLarge.muiltr-t7ycbq {
+  color: var(--page-text-1);
+}
+/* SUPERSEDES earlier broad rule: .MuiSvgIcon-root path:not([fill="none"]) { fill: ... } */
+
+.muiltr-ptgl8v {
+  border-color: var(--page-text-1);
+}
+
+.muiltr-qgg64x {
+  color: var(--page-text-1);
+  background-color: var(--page-bg);
+}
+
+#streams-filter-label {
+  color: var(--page-text-1);
+  background-color: var(--page-bg);
+}
+
+.muiltr-dpz1f2.MuiInputLabel-shrink::before {
+  background: var(--page-bg); /* gradient removed per instruction */
+}
+
+--- PAGE TEXT/ICON COLOR 2 (lighten 20%) ---
+
+.base-recent-activity .activity-stream .activity-group .activity-group-title {
+  color: var(--page-text-2);
+}
+
+.base-recent-activity .activity-stream .activity-group span.heading-date {
+  color: var(--page-text-2);
+}
+
+.base-recent-activity .activity-stream .activity-group .stream-item .element-details .content {
+  color: var(--page-text-2);
+}
+
+.element-card .element-details .author,
+.element-card .element-details .time {
+  color: var(--page-text-2);
+}
+
+@media only screen and (min-width: 40em) {
+  .base-recent-activity .activity-stream .activity-group .stream-item .timestamp {
+    color: var(--page-text-2);
+  }
+}
+
+.button--secondary {
+  background-color: var(--page-text-2);
+  color: var(--page-text-1);
+}
+
+.base-recent-activity .activity-stream .activity-group .stream-item-container:after,
+.base-recent-activity .activity-stream .activity-group:before {
+  background-color: var(--page-text-2);
+}
+/* Value changed from Color1 in earlier spec to Color2 here — this replaces the old assignment */
+
+.base-recent-activity .activity-stream .activity-group:after {
+  background-color: var(--page-bg);
+  border: 2px solid var(--page-text-2);
+}
+/* Value changed from Color1 in earlier spec to Color2 here — this replaces the old assignment */
+
+.js-split-datetime .date {
+  border-right: 1px solid var(--page-text-2);
+}
+.js-split-datetime .date::after {
+  content: "|";
+  color: var(--page-text-2);
+}
+
+.stream-item:hover .js-title-link,
+[class*="stream-item"]:hover .js-title-link {
+  color: var(--page-text-2) !important;
+}
+/* MOVED here from "carried forward" — previously var(--palette-link-hover), now maps to --page-text-2 */
+
+--- PAGE TEXT/ICON COLOR 3 (lighten 70%) ---
+
+.base-recent-activity .activity-stream .activity-group .stream-item:before {
+  background-color: color-mix(in srgb, var(--page-text-3) 85%, transparent);
+}
+
+--- ACCENT ---
+
+.color-selection-live-mode.color-selection-preview-bb-close .bb-close,
+.color-selection-live-mode .active.base-navigation-button-content,
+.color-selection-live-mode .active .integration-navigation-button-content {
+  background-color: var(--accent) !important;
+}
+
+--- NAVBAR (untouched — carried forward exactly as-is) ---
+
+.makeStylesroot-0-2-325 {
+  background-color: var(--navbar-bg);
+  border-bottom: 0.125rem solid var(--navbar-bg-darker);
+}
+
+.makeStylesroot-0-2-11 {
+  background-color: var(--page-bg);
+}
+
+.makeStylesroot-0-2-338 {
+  color: var(--navbar-text);
+}
+
+--- CARRIED FORWARD FROM EARLIER ROUNDS, NOT ADDRESSED IN THIS DOC ---
+(kept as-is since nothing here superseded them)
+
+#streams-filter .MuiInputBase-root,
+#streams-filter .MuiOutlinedInput-root {
+  background-color: var(--page-bg-lighter) !important;
+}
+
+/* .element-card, .stream-panel-activity-card
+   -> background-color property intentionally omitted (removed entirely) */
+
+/* .stream-item, .stream-item.angular-animate
+   -> background-color property intentionally omitted (removed entirely)
+   fallback only if selector can't be removed: background-color: var(--page-bg) !important; */
+
+=====================================================================
+POPUP UI CONTROLS
+=====================================================================
+- ADD: a color picker bound to --page-text-1, labeled "Page Text" in the popup.
+- REMOVE (for now): the Navbar color picker (the control bound to --navbar-bg).
+  Navbar tokens (--navbar-bg, --navbar-bg-darker, --navbar-text) remain in the 
+  CSS/token table and keep functioning off their current values — only the 
+  popup control for adjusting --navbar-bg is removed. Re-add later if needed.
+
+=====================================================================
+GLOBAL RULES
+=====================================================================
+1. No hardcoded hex/rgb/hsl color values anywhere in output — everything 
+   resolves through the token table.
+2. No --darkreader-* variable or fallback chain anywhere, at any depth.
+3. No selector appears twice with conflicting values for the same property.
+4. This document supersedes and replaces all prior partial specs for the 
+   selectors it covers (see "SUPERSEDES" notes above) — do not merge/diff 
+   against old versions of those specific selectors, only against the 
+   "carried forward" section, which remains valid.

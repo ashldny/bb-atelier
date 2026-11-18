@@ -1,280 +1,363 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=420" />
-  <title>Bb Atelier</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-
-  <!-- ═══ HEADER ═══ -->
-  <div class="header">
-    <div class="header-row">
-      <div class="header-text">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bb Atelier</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body aria-busy="true">
+    <header class="header">
+      <div>
         <h1>Bb Atelier</h1>
-        <span class="subtitle">Blackboard Ultra Theme Studio</span>
+        <p class="subtitle">Make Blackboard feel like you.</p>
       </div>
-      <label class="toggle-label master-toggle" title="Enable / disable all customization">
-        <input type="checkbox" id="masterToggle" checked />
-        <span class="toggle-slider"></span>
+      <label class="master-toggle">
+        <span class="sr-only">Enable customization</span>
+        <input type="checkbox" id="masterToggle" role="switch" checked disabled />
+        <span class="toggle-slider" aria-hidden="true"></span>
       </label>
-    </div>
-  </div>
+    </header>
 
-  <!-- ═══ TAB NAVBAR ═══ -->
-  <div class="tab-nav" role="tablist">
-    <button class="tab-btn active" data-tab="theme" role="tab" aria-selected="true" aria-controls="tab-theme">Theme</button>
-    <button class="tab-btn" data-tab="saved" role="tab" aria-selected="false" aria-controls="tab-saved">Saved</button>
-    <button class="tab-btn" data-tab="covers" role="tab" aria-selected="false" aria-controls="tab-covers">Covers</button>
-    <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false" aria-controls="tab-settings">Settings</button>
-  </div>
+    <nav class="tab-nav" role="tablist" aria-label="Customization">
+      <button
+        class="tab-btn active"
+        data-tab="theme"
+        role="tab"
+        aria-selected="true"
+        aria-controls="tab-theme"
+      >
+        Theme
+      </button>
+      <button
+        class="tab-btn"
+        data-tab="saved"
+        role="tab"
+        aria-selected="false"
+        aria-controls="tab-saved"
+        tabindex="-1"
+      >
+        Saved
+      </button>
+      <button
+        class="tab-btn"
+        data-tab="covers"
+        role="tab"
+        aria-selected="false"
+        aria-controls="tab-covers"
+        tabindex="-1"
+      >
+        Covers
+      </button>
+      <button
+        class="tab-btn"
+        data-tab="settings"
+        role="tab"
+        aria-selected="false"
+        aria-controls="tab-settings"
+        tabindex="-1"
+      >
+        Settings
+      </button>
+    </nav>
+    <p id="pausedNotice" class="notice" hidden>
+      Customization is paused. Your saved choices are safe.
+    </p>
 
-  <!-- ═══════════════════════════════════════════════════════
-       TAB: THEME — with sub-navbar Presets | Colors | Font
-       ═══════════════════════════════════════════════════════ -->
-  <div class="tab-content active" data-tab="theme" id="tab-theme" role="tabpanel">
-
-    <div class="sub-nav" role="tablist" aria-label="Theme sections">
-      <button class="sub-tab-btn active" data-subtab="presets" role="tab" aria-selected="true" aria-controls="sub-presets">Presets</button>
-      <button class="sub-tab-btn" data-subtab="colors" role="tab" aria-selected="false" aria-controls="sub-colors">Colors</button>
-      <button class="sub-tab-btn" data-subtab="font" role="tab" aria-selected="false" aria-controls="sub-font">Font</button>
-    </div>
-
-    <!-- Sub: Presets -->
-    <div class="sub-content active" data-subtab="presets" id="sub-presets" role="tabpanel">
-      <div class="presets-columns">
-        <div class="presets-col">
-          <div class="presets-col-label">
-            <svg class="lucide presets-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.93" y1="4.93" x2="5.58" y2="5.58"/><line x1="18.36" y1="18.36" x2="19.01" y2="19.01"/><line x1="1" y1="12" x2="3" y2="12"/><path d="M15.36 4.64L15.76 4.24M9.04 19.96L9.44 19.56"/></svg>
-            Light
+    <main>
+      <section class="tab-content active" data-tab="theme" id="tab-theme" role="tabpanel">
+        <fieldset id="customizationControls" disabled>
+          <legend class="sr-only">Theme customization</legend>
+          <div class="sub-nav" role="tablist" aria-label="Theme sections">
+            <button
+              class="sub-tab-btn active"
+              data-subtab="presets"
+              role="tab"
+              aria-selected="true"
+              aria-controls="sub-presets"
+            >
+              Presets
+            </button>
+            <button
+              class="sub-tab-btn"
+              data-subtab="colors"
+              role="tab"
+              aria-selected="false"
+              aria-controls="sub-colors"
+              tabindex="-1"
+            >
+              Colors
+            </button>
+            <button
+              class="sub-tab-btn"
+              data-subtab="font"
+              role="tab"
+              aria-selected="false"
+              aria-controls="sub-font"
+              tabindex="-1"
+            >
+              Typography
+            </button>
           </div>
-          <div id="presetGridLight" class="preset-grid-col"></div>
+          <section
+            class="sub-content active"
+            data-subtab="presets"
+            id="sub-presets"
+            role="tabpanel"
+          >
+            <div class="section-heading"><h2>Find your everyday look</h2></div>
+            <p class="hint">Hover to preview. Select to keep.</p>
+            <div class="presets-columns">
+              <div>
+                <h3 class="presets-col-label">Light</h3>
+                <div id="presetGridLight" class="preset-grid-col"></div>
+              </div>
+              <div>
+                <h3 class="presets-col-label">Dark</h3>
+                <div id="presetGridDark" class="preset-grid-col"></div>
+              </div>
+            </div>
+          </section>
+          <section class="sub-content" data-subtab="colors" id="sub-colors" role="tabpanel" hidden>
+            <h2>A palette of your own</h2>
+            <p class="hint">Changes save and apply as you go.</p>
+            <div class="colors-grid">
+              <label class="color-swatch"
+                ><span>Background</span
+                ><input type="color" id="pageBgPicker" value="#1a1a1a" /><span
+                  class="swatch-hex"
+                  id="hexPageBg"
+                  >#1a1a1a</span
+                ></label
+              >
+              <label class="color-swatch"
+                ><span>Accent</span
+                ><input type="color" id="activeTabGlowPicker" value="#670d2f" /><span
+                  class="swatch-hex"
+                  id="hexAccent"
+                  >#670d2f</span
+                ></label
+              >
+              <label class="color-swatch"
+                ><span>Sidebar</span><input type="color" id="navbarPicker" value="#121212" /><span
+                  class="swatch-hex"
+                  id="hexNavbar"
+                  >#121212</span
+                ></label
+              >
+              <label class="color-swatch"
+                ><span>Text</span><input type="color" id="pageTextPicker" value="#e0e0e0" /><span
+                  class="swatch-hex"
+                  id="hexPageText"
+                  >#e0e0e0</span
+                ></label
+              >
+            </div>
+            <label class="settings-toggle"
+              ><input type="checkbox" id="autoTextToggle" /><span
+                >Choose readable text automatically</span
+              ></label
+            >
+            <p id="contrastSummary" class="contrast-summary" role="status"></p>
+          </section>
+          <section class="sub-content" data-subtab="font" id="sub-font" role="tabpanel" hidden>
+            <h2>A little easier to read</h2>
+            <p class="hint">Pick a typeface for your Blackboard pages.</p>
+            <label class="field-label" for="fontSelect">Typeface</label>
+            <select id="fontSelect">
+              <option value="">Blackboard default</option>
+              <optgroup label="Sans serif">
+                <option value="Inter">Inter</option>
+                <option value="system-ui">System UI</option>
+                <option value="Segoe UI">Segoe UI</option>
+                <option value="Roboto">Roboto</option>
+              </optgroup>
+              <optgroup label="Serif">
+                <option value="Noto Serif">Noto Serif</option>
+                <option value="serif">Generic serif</option>
+              </optgroup>
+              <optgroup label="Monospace"><option value="monospace">Monospace</option></optgroup>
+              <optgroup id="fontUploadGroup" label="Your upload" hidden></optgroup>
+            </select>
+            <div class="font-preview" id="fontPreview"><span>Aa</span> A fresh perspective.</div>
+            <div class="button-row">
+              <button class="btn secondary" id="fontUploadBtn">Upload font</button
+              ><button class="btn quiet" id="resetFontBtn">Reset</button>
+            </div>
+            <p class="hint">TTF, OTF, WOFF or WOFF2 · up to 512 KB</p>
+            <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" hidden />
+          </section>
+        </fieldset>
+      </section>
+
+      <section class="tab-content" data-tab="saved" id="tab-saved" role="tabpanel" hidden>
+        <div class="section-heading">
+          <h2>Your saved looks</h2>
+          <button class="btn primary" id="saveCurrentBtn">Save current</button>
         </div>
-        <div class="presets-col">
-          <div class="presets-col-label">
-            <svg class="lucide presets-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/><path d="M1 3a12 12 0 0 1 17.92 17.92"/><path d="M2 11h2"/><path d="M11 2v2"/></svg>
-            Dark
+        <form id="saveThemeForm" class="inline-form" hidden>
+          <label class="field-label" for="saveThemeName">Theme name</label>
+          <input
+            id="saveThemeName"
+            type="text"
+            maxlength="40"
+            placeholder="My everyday theme"
+            required
+          />
+          <div class="button-row">
+            <button class="btn primary" type="submit">Save theme</button
+            ><button class="btn quiet" id="cancelSaveThemeBtn" type="button">Cancel</button>
           </div>
-          <div id="presetGridDark" class="preset-grid-col"></div>
+        </form>
+        <div id="savedList"></div>
+        <div class="button-row transfer-actions">
+          <button class="btn secondary" id="exportThemesBtn">Export themes</button
+          ><button class="btn quiet" id="importThemesBtn">Import themes</button>
         </div>
-      </div>
-    </div>
+        <input type="file" id="importThemesFile" accept=".json,application/json" hidden />
+      </section>
 
-    <!-- Sub: Colors -->
-    <div class="sub-content" data-subtab="colors" id="sub-colors" role="tabpanel">
-      <div class="colors-row">
-        <label class="color-swatch">
-          <span class="swatch-label">Page Background</span>
-          <input type="color" id="pageBgPicker" value="#ffffff" />
-          <span class="swatch-hex" id="hexPageBg">#ffffff</span>
-          <span class="swatch-contrast ok" id="contrastPageBg">Good</span>
-        </label>
-        <label class="color-swatch">
-          <span class="swatch-label">Accent</span>
-          <input type="color" id="activeTabGlowPicker" value="#670D2F" />
-          <span class="swatch-hex" id="hexAccent">#670d2f</span>
-          <span class="swatch-contrast ok" id="contrastAccent">Good</span>
-        </label>
-        <label class="color-swatch">
-          <span class="swatch-label">Navbar / Sidebar</span>
-          <input type="color" id="navbarPicker" value="#262626" />
-          <span class="swatch-hex" id="hexNavbar">#262626</span>
-          <span class="swatch-contrast warn" id="contrastNavbar">Check</span>
-        </label>
-      </div>
-      <div class="info-row">
-        <span class="auto-label">Text colors are auto-derived from your page background</span>
-      </div>
-    </div>
+      <section class="tab-content" data-tab="covers" id="tab-covers" role="tabpanel" hidden>
+        <div class="section-heading">
+          <h2>Course covers</h2>
+          <button class="btn quiet" id="refreshCoursesBtn">Refresh list</button>
+        </div>
+        <label class="field-label" for="courseSelect">Course</label>
+        <select id="courseSelect">
+          <option value="">Select a course…</option>
+        </select>
+        <p id="coursesEmpty" class="hint" hidden>
+          Open the Courses page in Blackboard, then refresh this list.
+        </p>
+        <fieldset id="coverEditor" disabled>
+          <legend class="sr-only">Edit course cover</legend>
+          <div id="courseCoverPreview" class="cover-preview">
+            <span class="cover-placeholder">Give this course a new view.</span>
+            <img id="coverImage" alt="Course cover preview" hidden />
+            <button
+              type="button"
+              id="coverFocal"
+              class="cover-focal"
+              aria-label="Cover position. Use arrow keys to adjust."
+            ></button>
+          </div>
+          <p id="coverHint" class="hint" hidden>
+            Drag to frame your image, or use the arrow keys on the handle.
+          </p>
+          <div id="coverPositionControls" class="cover-position-row" hidden>
+            <span>Position <span id="coverPositionText">50% / 50%</span></span
+            ><button class="btn quiet" id="resetPositionBtn">Center</button>
+          </div>
+          <div class="button-row">
+            <button class="btn secondary" id="uploadCoverBtn">Upload image</button
+            ><button class="btn quiet" id="coverUrlBtn">Use a URL</button
+            ><button class="btn quiet danger" id="removeCoverBtn">Remove</button>
+          </div>
+          <div id="coverUrlInput" class="inline-form" hidden>
+            <label class="field-label" for="coverUrlField">Image URL</label>
+            <input type="url" id="coverUrlField" placeholder="https://example.com/image.jpg" />
+            <div class="button-row">
+              <button class="btn primary" id="coverUrlApply">Use image</button
+              ><button class="btn quiet" id="coverUrlCancel">Cancel</button>
+            </div>
+          </div>
+          <input
+            type="file"
+            id="coverUpload"
+            accept="image/png,image/jpeg,image/gif,image/webp,image/avif"
+            hidden
+          />
+        </fieldset>
+        <section class="section">
+          <div class="section-heading">
+            <h2>Image library</h2>
+            <button class="btn quiet" id="uploadLibraryBtn">Add images</button>
+          </div>
+          <div id="libraryGrid" class="library-grid"></div>
+          <div class="section-heading">
+            <span class="hint">Up to 2 MB per image</span
+            ><button class="btn quiet danger" id="clearLibraryBtn">Clear library</button>
+          </div>
+          <input
+            type="file"
+            id="libraryUpload"
+            accept="image/png,image/jpeg,image/gif,image/webp,image/avif"
+            multiple
+            hidden
+          />
+        </section>
+      </section>
 
-    <!-- Sub: Font -->
-    <div class="sub-content" data-subtab="font" id="sub-font" role="tabpanel">
-      <label class="font-group-label">Presets</label>
-      <select id="fontSelect" size="4">
-        <optgroup label="Sans-serif">
-          <option value="Inter">Inter</option>
-          <option value="system-ui">System UI</option>
-          <option value="Segoe UI">Segoe UI</option>
-          <option value="Roboto">Roboto</option>
-        </optgroup>
-        <optgroup label="Serif">
-          <option value="Noto Serif">Noto Serif</option>
-          <option value="serif">Generic Serif</option>
-        </optgroup>
-        <optgroup label="Monospace">
-          <option value="monospace">Generic Monospace</option>
-        </optgroup>
-        <optgroup id="fontUploadGroup" label="Your uploads" style="display:none"></optgroup>
-      </select>
-      <div class="font-upload-row">
-        <button class="btn secondary" id="fontUploadBtn" style="width:auto; padding: 6px 14px;">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Upload Font
-        </button>
-        <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" style="display:none" />
-      </div>
-      <div class="font-preview" id="fontPreview">AaBbCc DdEeFf</div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════
-       TAB: SAVED
-       ═══════════════════════════════════════════════════════ -->
-  <div class="tab-content" data-tab="saved" id="tab-saved" role="tabpanel">
-    <div class="section">
-      <div class="section-label">Saved Themes</div>
-      <div id="savedList">
-        <div class="saved-empty">No saved themes yet</div>
-      </div>
-      <div class="saved-btns">
-        <button class="btn secondary" id="saveCurrentBtn">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Save Current
-        </button>
-        <button class="btn secondary" id="exportThemesBtn">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export
-        </button>
-        <button class="btn secondary" id="importThemesBtn">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Import
-        </button>
-        <input type="file" id="importThemesFile" accept=".json" style="display:none" />
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════
-       TAB: COVERS
-       ═══════════════════════════════════════════════════════ -->
-  <div class="tab-content" data-tab="covers" id="tab-covers" role="tabpanel">
-    <div class="section">
-      <div class="section-label">Course Covers</div>
-      <select id="courseSelect">
-        <option value="">Select a course…</option>
-      </select>
-      <div id="courseCoverPreview" class="cover-preview">
-        <span class="cover-placeholder">No cover set</span>
-        <img id="coverImage" src="" alt="Course cover preview" />
-        <div id="coverFocal" class="cover-focal" title="Drag to adjust position"></div>
-      </div>
-      <div id="coverHint" class="cover-hint" style="display:none">Drag the circle on the preview to adjust which area shows as the cover</div>
-      <div id="coverPositionControls" class="cover-position-row" style="display:none">
-        <span class="cover-position-label">Position: <span id="coverPositionText">50% 50%</span></span>
-        <button class="btn icon-btn" id="resetPositionBtn" aria-label="Reset position" title="Reset position">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-        </button>
-      </div>
-      <div class="cover-btns">
-        <button class="btn secondary" id="uploadCoverBtn">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Upload
-        </button>
-        <button class="btn secondary" id="coverUrlBtn">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          URL
-        </button>
-        <button class="btn secondary danger" id="removeCoverBtn" aria-label="Remove cover" title="Remove cover">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        </button>
-      </div>
-      <div id="coverUrlInput" class="cover-url-row" style="display:none">
-        <input type="url" id="coverUrlField" class="cover-url-field" placeholder="https://example.com/image.jpg" />
-        <button class="btn icon-btn" id="coverUrlApply" aria-label="Apply URL" title="Apply">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-        </button>
-        <button class="btn icon-btn" id="coverUrlCancel" aria-label="Cancel" title="Cancel">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <input type="file" id="coverUpload" accept="image/*" style="display:none" />
-    </div>
-
-    <!-- ─── Image Library ─── -->
-    <div class="section">
-      <div class="section-label">Image Library</div>
-      <div id="libraryGrid" class="library-grid"></div>
-      <div class="cover-btns">
-        <button class="btn secondary" id="uploadLibraryBtn">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Upload
-        </button>
-        <button class="btn icon-btn danger" id="clearLibraryBtn" aria-label="Clear all" title="Clear all">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        </button>
-        <input type="file" id="libraryUpload" accept="image/*" multiple style="display:none" />
-      </div>
-      <div class="library-hint" id="libraryHint" style="display:none">Select a course above, then click an image to assign it as the cover</div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════
-       TAB: SETTINGS
-       ═══════════════════════════════════════════════════════ -->
-  <div class="tab-content" data-tab="settings" id="tab-settings" role="tabpanel">
-
-    <div class="section">
-      <div class="section-label">Custom Domain</div>
-      <div class="settings-field">
-        <input type="text" id="customDomainInput" class="settings-input" placeholder="e.g. blackboard.my-uni.edu" spellcheck="false" />
-        <button class="btn secondary" id="saveCustomDomainBtn" style="width:auto; padding: 6px 14px;">Save</button>
-      </div>
-      <span class="settings-hint">Applies Bb Atelier to your institution's Blackboard domain. Requires host permission on save.</span>
-      <div id="customDomainStatus" class="settings-status"></div>
-    </div>
-
-    <div class="section">
-      <div class="section-label">Engine</div>
-      <div class="radio-group">
-        <label class="radio-row">
-          <input type="radio" name="engine" value="native" checked />
-          <span>Native CSS</span>
-        </label>
-        <label class="radio-row">
-          <input type="radio" name="engine" value="darkreader" />
-          <span>Dark Reader</span>
-        </label>
-      </div>
-      <span class="settings-hint">Native is fast and precise. Dark Reader inverts the whole page dynamically.</span>
-    </div>
-
-    <div class="section">
-      <div class="section-label">General</div>
-      <label class="settings-toggle">
-        <input type="checkbox" id="autoApplyToggle" checked />
-        <span>Auto-apply on Blackboard load</span>
-      </label>
-      <label class="settings-toggle">
-        <input type="checkbox" id="showToastToggle" checked />
-        <span>Show confirmation toasts</span>
-      </label>
-    </div>
-
-    <div class="section">
-      <div class="section-label">Data</div>
-      <div class="settings-actions">
-        <button class="btn secondary" id="exportSettingsBtn">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export
-        </button>
-        <button class="btn secondary" id="importSettingsBtn">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Import
-        </button>
-        <input type="file" id="importSettingsFile" accept=".json" style="display:none" />
-      </div>
-      <div class="settings-actions" style="margin-top:6px">
-        <button class="btn secondary" id="clearCacheBtn">Clear Cache</button>
-        <button class="btn secondary danger" id="resetAllBtn">
-          <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          Reset All
-        </button>
-      </div>
-      <span class="settings-version" id="versionLabel"></span>
-    </div>
-  </div>
-
-  <script type="module" src="src/popup/popup.js"></script>
-</body>
+      <section class="tab-content" data-tab="settings" id="tab-settings" role="tabpanel" hidden>
+        <section class="section first-section">
+          <h2>Your Blackboard site</h2>
+          <p class="hint">
+            Qatar University and blackboard.com work automatically. Add another institution here.
+          </p>
+          <label class="field-label" for="customDomainInput">Custom domain</label>
+          <div class="settings-field">
+            <input
+              type="text"
+              id="customDomainInput"
+              placeholder="blackboard.example.edu"
+              spellcheck="false"
+            /><button class="btn secondary" id="saveCustomDomainBtn">Connect</button>
+          </div>
+          <p id="customDomainStatus" class="settings-status" role="status"></p>
+        </section>
+        <section class="section">
+          <h2>Appearance engine</h2>
+          <div class="radio-group">
+            <label class="radio-row"
+              ><input type="radio" name="engine" value="native" checked /><span
+                >Native <small>Recommended</small></span
+              ></label
+            >
+            <label class="radio-row"
+              ><input type="radio" name="engine" value="darkreader" /><span
+                >Dark Reader</span
+              ></label
+            >
+          </div>
+          <p class="hint">
+            Native styling is lightweight. Dark Reader also adjusts pages outside Ultra’s standard
+            layouts.
+          </p>
+        </section>
+        <section class="section">
+          <h2>Preferences</h2>
+          <label class="settings-toggle"
+            ><input type="checkbox" id="autoApplyToggle" checked /><span
+              >Apply automatically when Blackboard opens</span
+            ></label
+          >
+          <label class="settings-toggle"
+            ><input type="checkbox" id="showToastToggle" checked /><span
+              >Show save confirmations</span
+            ></label
+          >
+        </section>
+        <section class="section">
+          <h2>Backup &amp; reset</h2>
+          <div class="button-row">
+            <button class="btn secondary" id="exportSettingsBtn">Export backup</button
+            ><button class="btn quiet" id="importSettingsBtn">Import backup</button>
+          </div>
+          <input type="file" id="importSettingsFile" accept=".json,application/json" hidden />
+          <details class="advanced">
+            <summary>Maintenance</summary>
+            <div class="button-row">
+              <button class="btn quiet" id="clearCacheBtn">Clear cache</button
+              ><button class="btn quiet danger" id="resetAllBtn">Reset everything</button>
+            </div>
+          </details>
+          <p class="settings-version" id="versionLabel"></p>
+        </section>
+      </section>
+    </main>
+    <footer>
+      <p id="connectionStatus" role="status" data-state="idle">Connecting to Blackboard…</p>
+    </footer>
+    <script type="module" src="src/popup/popup.js"></script>
+  </body>
 </html>

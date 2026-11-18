@@ -1,146 +1,68 @@
-# 🎨 Bb Atelier
+# Bb Atelier
 
-**Blackboard Ultra Theme Studio** — A Chrome extension that lets you fully customize the appearance of Blackboard Ultra LMS.
+A Manifest V3 Chrome extension for personalizing Blackboard Ultra with themes, fonts and course covers.
 
-![Version](https://img.shields.io/badge/version-2.0-blue)
-![Manifest V3](https://img.shields.io/badge/Manifest-V3-orange)
-![Chrome](https://img.shields.io/badge/Chrome-Extension-yellow)
+## Use
 
----
+1. Run `npm install` and `npm run build` (Node 22.13+ or 24 recommended).
+2. Open `chrome://extensions`, enable Developer mode and load this folder unpacked.
+3. Open Blackboard, then the extension popup.
 
-## ✨ Features
+If the extension is already loaded, use its **Reload** button once after updating this code. Changes made in the popup then apply live, including on already-open Blackboard pages and supported frames. Missing content scripts are recovered when the popup connects. No Blackboard reload is required for ordinary customization changes.
 
-### 🎨 Theme Customization
-- **3 color pickers** — Page Background, Accent/Brand, Navbar/Sidebar
-- **60+ CSS variables** auto-derived from your 3 chosen colors
-- **Auto text colors** — light text on dark bg, dark text on light bg
-- **Dark & light mode** support with proper CSS variable overrides
+Supported sites are `elearning.qu.edu.qa` and `*.blackboard.com`, including Ultra subdomains. For another institution, enter its domain in Settings and choose **Connect**. Access is requested only for that domain. Clearing the domain or revoking its permission stops customization there.
 
-### 📦 8 Built-in Presets
-| Preset | Background | Accent | Style |
-|--------|-----------|--------|-------|
-| Midnight | `#1a1a2e` | `#e94560` | Dark |
-| Ocean | `#f0f4f8` | `#2563eb` | Light |
-| Forest | `#f0fdf4` | `#16a34a` | Light |
-| Sunset | `#fefce8` | `#ea580c` | Light |
-| Lavender | `#faf5ff` | `#9333ea` | Light |
-| Default Dark | `#121212` | `#a234b5` | Dark |
-| Default Light | `#ffffff` | `#a234b5` | Light |
-| High Contrast | `#000000` | `#00ff00` | Dark |
+## Features
 
-### 💾 Saved Themes
-- Save unlimited custom themes with names
-- Load, delete, and manage themes
-- **Export** all themes as JSON
-- **Import** themes from JSON files (with validation)
-- Hover preview on saved themes
+- Eight light/dark presets, with temporary hover previews and an explicit selected state.
+- Independent background, accent, sidebar and text colors; optional automatic text with measured WCAG contrast.
+- Keyboard-accessible navigation and readable controls in an 800 × 580 popup with a scrolling content area.
+- Named saved themes, including text colors and uploaded fonts, with JSON import/export.
+- Inter and Noto Serif assets bundled locally; system-font choices and custom TTF, OTF, WOFF and WOFF2 uploads up to 512 KB.
+- Course covers from uploads or image URLs. Drag or use arrow keys to position them. Uploaded images can be reused from the library; uploads are limited to 2 MB per image.
+- A reversible master switch. Pausing styling preserves your themes, fonts, covers and library.
+- Native CSS by default, with an optional live Dark Reader engine.
+- Automatic application, confirmation preferences, complete backup import/export and an explicit reset action.
 
-### 🔤 Font Customization
-- Built-in fonts: Inter, System UI, Segoe UI, Roboto
-- Upload custom fonts (`.ttf`, `.otf`, `.woff`, `.woff2` — max 512KB)
+Image URLs load directly as images rather than going through a content-script fetch that cannot bypass CORS. A host that blocks image embedding may still require uploading the image instead.
 
-### 🖼 Course Covers
-- Set custom banner images for any course
-- **Upload from file** or **load from URL**
-- **Draggable focal point** to adjust which part of the image shows
-- **Image Library** — upload images once, assign to multiple courses
-- Auto-restores covers on page load
+## Development
 
-### ⚡ Master Toggle
-- Single on/off switch to enable/disable all customization instantly
-
----
-
-## 📦 Installation
-
-1. Download or clone this repository
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable **Developer mode** (toggle in top-right)
-4. Click **Load unpacked**
-5. Select the `blackboard-extension` folder
-6. The 🎨 Bb Atelier icon appears in your toolbar
-
----
-
-## 🚀 Usage
-
-1. Navigate to a supported Blackboard domain
-2. Click the extension icon to open the popup
-3. Use the **Theme** tab to pick presets or customize colors
-4. Use the **Saved** tab to save/load/export/import themes
-5. Use the **Covers** tab to set custom course banner images
-6. Toggle the master switch in the header to enable/disable everything
-
----
-
-## 🌐 Supported Domains
-
-- `elearning.qu.edu.qa` — Qatar University eLearning
-- `*.blackboard.com` — Any Blackboard-hosted domain
-- `*.ultra.blackboard.com` — Blackboard Ultra subdomains
-
----
-
-## 📁 File Structure
-
-```
-blackboard-extension/
-├── manifest.json              # Extension manifest (v3)
-├── popup.html                 # Popup UI (3 tabs)
-├── content.js                 # Content script (CSS injection, covers)
-├── style.css                  # Popup styling
-├── icons/                     # Extension icons
-├── Fonts/                     # Ranade font family (OTF, TTF, Web)
-└── src/
-    ├── popup/
-    │   ├── popup.js           # Entry point
-    │   ├── tabs.js            # Tab switching
-    │   ├── theme.js           # Theme tab logic
-    │   ├── savedThemes.js     # Save/load/export/import
-    │   ├── courseCovers.js    # Covers & library
-    │   └── settings.js        # Restore settings on open
-    ├── theme/
-    │   ├── presets.js         # 8 preset themes
-    │   ├── palette.js         # Derive 60+ CSS variables
-    │   ├── cssBuilder.js      # Generate CSS string
-    │   └── colorUtils.js      # Color manipulation utilities
-    ├── messaging/
-    │   └── themeMessaging.js  # Chrome tab messaging
-    └── utils/
-        ├── constants.js       # Default colors
-        ├── sanitization.js    # XSS prevention, validation
-        └── ui.js              # Toast, debounce, hex validation
+```sh
+npm run build    # One Rollup pipeline; content-entry.js is the sole content runtime
+npm run dev      # Watch source changes
+npm test         # Rebuild, then run DOM integration and validation tests
+npm run lint     # ESLint, Chrome MV3 packaging checks and web-ext analysis
 ```
 
----
+`content.js`, `content.js.map`, `background.js`, `background.js.map` and `dist/` are generated. Edit source modules instead. The old `build:esbuild` and `dev:esbuild` commands are compatibility aliases for the same Rollup pipeline.
 
-## 🔒 Security
+The web-ext analyzer targets Firefox. `scripts/lint-extension.js` reports its results and excludes only the two Firefox-specific manifest errors for the absent Gecko ID/background fallback. This extension intentionally ships a Chrome MV3 service worker. Other errors still fail the check; advisory warnings remain visible. The script separately checks Chrome-required files and supported icon formats.
 
-- HTML escaping for user input (XSS prevention)
-- URL sanitization (only `http:`, `https:`, `data:` protocols)
-- File size validation (font: 512KB, images: 2MB)
-- Font name sanitization (alphanumeric + spaces only)
-- Content Security Policy enforced on extension pages
-- Imported themes validated with hex color checks
+Chrome requires raster manifest icons. PNG counterparts preserve the existing SVG artwork. Regenerate them with `node scripts/build-icons.js`; the SVG source assets are unchanged.
 
----
+## Runtime and storage
 
-## 🛠 Tech Stack
+- `src/content-entry.js` subscribes to storage once and coordinates small modules in `src/content/`.
+- `src/content/styles.js` watches the head for removed or superseded styles. It does not rescan Blackboard content on every mutation.
+- Native styling does not run color detection, periodic rescans or computed-style sampling. Dark Reader runs only when selected; its fetch helper never replaces `window.fetch`.
+- Covers follow added or recycled course cards. The observer is disconnected when covers are inactive. There is no cover polling loop.
+- Color drags preview without per-event sync writes. Cover position drags reuse existing image data and write the final position on release.
+- Compact preferences live in sync storage. Saved themes, uploaded fonts, covers and the image library live in local storage to avoid sync's per-item quota. The service worker migrates older collections before the popup reads them. These local collections no longer sync between computers; export a backup to transfer them.
+- The popup uses one messaging helper. Storage changes update all connected supported frames; on-demand commands use the originally selected tab.
+- Imports validate colors, fonts, image URLs and allowed fields. Imported CSS is never executed, and backups cannot silently grant site permissions.
 
-- **Chrome Extension Manifest V3**
-- **Vanilla JavaScript** (ES Modules)
-- **Chrome Storage API** (`sync` + `local`)
-- **CSS Custom Properties** for theme injection
-- **MutationObserver** for dynamic content detection
+The legacy color-scanning modules are retained as source references and are not part of the active content bundle or popup.
 
----
+## Verification scope
 
-## 📄 License
+Automated checks use the built content bundle and bundled popup modules in a DOM environment with simulated Chrome APIs. They cover restoration, pausing, navigation, style recovery, frame updates, messaging recovery, color-write batching, theme/font round trips, library uploads, imports, reset, domain registration and input validation. They also check that ordinary page mutations do not rewrite styles.
 
-MIT
+They do not replace a live Chrome/Blackboard check of layout, real course markup, uploaded font rendering or Dark Reader's dynamic rendering. Browser preview was blocked in this editing session, so those checks remain manual:
 
----
-
-## 🙏 Credits
-
-Built with ❤️ for Blackboard Ultra users who want a better-looking LMS.
+1. Reload the extension once and open Blackboard Ultra.
+2. Switch presets and engines; check late-loaded dialogs and navigation without refreshing Blackboard.
+3. Pause/resume; confirm covers and fonts return.
+4. Save/load/import/export a theme with custom text and an uploaded font.
+5. Open Courses, refresh the popup list, upload/position/remove a cover and navigate away/back.
+6. Check popup scrolling, keyboard focus and the console for `[BbAtelier]` errors.

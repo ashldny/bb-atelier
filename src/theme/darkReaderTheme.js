@@ -5,6 +5,9 @@
 
 // Default bbTheme — persisted as one key `bbTheme` (batch writes)
 export const DEFAULT_THEME = {
+  engine: 'native',
+  autoApply: true,
+  showToast: true,
   // enable/disable is distinct from mode: disable() reverts styling entirely
   enabled: true,
   debug: false,
@@ -66,8 +69,12 @@ function sanitizeSelectors(arr) {
  * @returns {object} normalized theme
  */
 export function normalizeTheme(raw = {}) {
+  raw = raw && typeof raw === 'object' ? raw : {};
   const d = DEFAULT_THEME;
   return {
+    engine: raw.engine === 'darkreader' ? 'darkreader' : 'native',
+    autoApply: raw.autoApply !== false,
+    showToast: raw.showToast !== false,
     enabled: typeof raw.enabled === 'boolean' ? raw.enabled : d.enabled,
     debug: typeof raw.debug === 'boolean' ? raw.debug : d.debug,
     mode: raw.mode === 0 || raw.mode === 1 ? raw.mode : d.mode,
@@ -87,14 +94,17 @@ export function normalizeTheme(raw = {}) {
     lightSchemeTextColor: HEX_RE.test(raw.lightSchemeTextColor)
       ? raw.lightSchemeTextColor
       : d.lightSchemeTextColor,
-    scrollbarColor: typeof raw.scrollbarColor === 'string' ? raw.scrollbarColor : d.scrollbarColor,
-    selectionColor: typeof raw.selectionColor === 'string' ? raw.selectionColor : d.selectionColor,
+    scrollbarColor: HEX_RE.test(raw.scrollbarColor) ? raw.scrollbarColor : d.scrollbarColor,
+    selectionColor: HEX_RE.test(raw.selectionColor) ? raw.selectionColor : d.selectionColor,
     styleSystemControls:
       typeof raw.styleSystemControls === 'boolean'
         ? raw.styleSystemControls
         : d.styleSystemControls,
     useFont: typeof raw.useFont === 'boolean' ? raw.useFont : d.useFont,
-    fontFamily: typeof raw.fontFamily === 'string' ? raw.fontFamily.slice(0, 100) : d.fontFamily,
+    fontFamily:
+      typeof raw.fontFamily === 'string' && /^[a-zA-Z0-9 ]{1,100}$/.test(raw.fontFamily)
+        ? raw.fontFamily
+        : d.fontFamily,
     textStroke: clamp(raw.textStroke, 0, 1, d.textStroke),
     selectorsToIgnore: sanitizeSelectors(raw.selectorsToIgnore),
     customDomain:
@@ -150,8 +160,10 @@ export function toDarkReaderTheme(theme) {
     darkSchemeTextColor: String(theme.darkSchemeTextColor).toLowerCase(),
     lightSchemeBackgroundColor: String(theme.lightSchemeBackgroundColor).toLowerCase(),
     lightSchemeTextColor: String(theme.lightSchemeTextColor).toLowerCase(),
-    scrollbarColor: theme.scrollbarColor === 'auto' ? '' : String(theme.scrollbarColor).toLowerCase(),
-    selectionColor: theme.selectionColor === 'auto' ? '' : String(theme.selectionColor).toLowerCase(),
+    scrollbarColor:
+      theme.scrollbarColor === 'auto' ? '' : String(theme.scrollbarColor).toLowerCase(),
+    selectionColor:
+      theme.selectionColor === 'auto' ? '' : String(theme.selectionColor).toLowerCase(),
     styleSystemControls: !!theme.styleSystemControls,
     useFont: !!theme.useFont,
     fontFamily: String(theme.fontFamily || ''),

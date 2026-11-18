@@ -4,27 +4,31 @@
   "description": "Blackboard Ultra Theme Studio",
   "type": "module",
   "scripts": {
-    "build": "rollup -c && npm run build:esbuild",
+    "build": "rollup -c",
     "build:rollup": "rollup -c",
-    "build:esbuild": "esbuild src/content.js --bundle --minify --sourcemap --format=iife --outfile=content.js --global-name=BBAtelierDR --external:fs --external:path --external:url && esbuild src/content.js --bundle --minify --sourcemap --format=iife --outfile=dist/content.js --global-name=BBAtelierDR --external:fs --external:path --external:url && esbuild src/background.js --bundle --minify --sourcemap --format=iife --outfile=background.js --global-name=BBAtelierBG --external:fs --external:path --external:url",
+    "build:esbuild": "npm run build",
     "dev": "rollup -c -w",
-    "dev:esbuild": "esbuild src/content.js --bundle --sourcemap --format=iife --outfile=content.js --watch --external:fs --external:path --external:url",
-    "lint": "eslint src/ --ext .js",
-    "lint:strict": "eslint src/ --ext .js && web-ext lint",
+    "dev:esbuild": "npm run dev",
+    "lint": "eslint src/ --ext .js --max-warnings 0 && node scripts/lint-extension.js",
+    "lint:strict": "npm run lint",
     "lint:fix": "eslint src/ --ext .js --fix",
     "format": "prettier --write \"src/**/*.{js,css}\" \"*.{html,json,js}\"",
-    "format:check": "prettier --check \"src/**/*.{js,css}\" \"*.{html,json,js}\""
+    "format:check": "prettier --check \"src/**/*.{js,css}\" \"*.{html,json,js}\"",
+    "test": "node --test tests/*.test.js",
+    "pretest": "npm run build"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-terser": "^0.4.4",
-    "esbuild": "^0.27.1",
+    "@rollup/plugin-terser": "^1.0.2",
+    "esbuild": "^0.28.2",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
+    "jsdom": "^29.1.1",
     "prettier": "^3.3.3",
     "rollup": "^4.9.6",
-    "web-ext": "^8.2.0"
+    "web-ext": "^10.8.0"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
@@ -34,5 +38,8 @@
     "darkreader": "^4.9.80",
     "lucide": "^1.37.0",
     "postcss-value-parser": "^4.2.0"
+  },
+  "overrides": {
+    "decode-uri-component": "^0.5.1"
   }
 }

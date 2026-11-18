@@ -1,0 +1,21 @@
+export default {
+  ignoreFiles: [
+    'node_modules/**',
+    'dist/**',
+    'tests/**',
+    'test-results/**',
+    'playwright-report/**',
+    '.git/**',
+    '.agents/**',
+    '*.md',
+    '*.txt',
+    '*lock.json',
+    'package.json',
+    'rollup.config.js',
+    'web-ext.config.mjs',
+    'playwright.config.js',
+    '.eslintrc*',
+    '.gitignore',
+    '.prettier*',
+  ],
+};

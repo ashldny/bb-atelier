@@ -4,3 +4,5 @@ content.js.map
 dist/
 .DS_Store
 .env
+test-results/
+playwright-report/

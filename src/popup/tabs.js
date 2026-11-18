@@ -1,29 +1,50 @@
-// ═════════════════════════════════════════════════════════
-//  Bb Atelier — Tab Switching
-// ═════════════════════════════════════════════════════════
-
-/**
- * Initialize tab switching behaviour
- */
-export function initTabs() {
-  const tabs = document.querySelectorAll('.tab-btn');
-  const contents = document.querySelectorAll('.tab-content');
-
-  tabs.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      tabs.forEach((b) => {
-        b.classList.remove('active');
-        b.setAttribute('aria-selected', 'false');
-      });
-      btn.classList.add('active');
-      btn.setAttribute('aria-selected', 'true');
-
-      contents.forEach((c) => {
-        c.classList.toggle('active', c.dataset.tab === tab);
-      });
-
-      chrome.storage.sync.set({ activeTab: tab });
+// Both tab groups use the same ARIA and keyboard behavior.
+export function initTabGroup(buttonSelector, panelSelector, attribute, initial) {
+  const buttons = [...document.querySelectorAll(buttonSelector)];
+  const panels = [...document.querySelectorAll(panelSelector)];
+  function activate(button, focus = false) {
+    buttons.forEach((item) => {
+      const selected = item === button;
+      item.classList.toggle('active', selected);
+      item.setAttribute('aria-selected', String(selected));
+      item.tabIndex = selected ? 0 : -1;
+      item.id ||= `nav-${item.dataset[attribute]}`;
     });
+    panels.forEach((panel) => {
+      const selected = panel.dataset[attribute] === button.dataset[attribute];
+      panel.classList.toggle('active', selected);
+      panel.hidden = !selected;
+      panel.setAttribute('aria-labelledby', `nav-${panel.dataset[attribute]}`);
+    });
+    if (focus) button.focus();
+    document.dispatchEvent(
+      new CustomEvent('bb-tab-change', {
+        detail: { group: attribute, value: button.dataset[attribute] },
+      })
+    );
+  }
+  buttons.forEach((button, index) => {
+    button.addEventListener('click', () => activate(button));
+    button.addEventListener('keydown', (event) => {
+      const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+      if (!keys.includes(event.key)) return;
+      event.preventDefault();
+      const next =
+        event.key === 'Home'
+          ? 0
+          : event.key === 'End'
+            ? buttons.length - 1
+            : (index + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+      activate(buttons[next], true);
+    });
+  });
+  activate(buttons.find((button) => button.dataset[attribute] === initial) || buttons[0]);
+}
+
+export function initTabs(initial = 'theme') {
+  initTabGroup('.tab-btn', '.tab-content', 'tab', initial);
+  document.addEventListener('bb-tab-change', (event) => {
+    if (event.detail.group === 'tab')
+      chrome.storage.local.set({ activeTab: event.detail.value }).catch(() => {});
   });
 }

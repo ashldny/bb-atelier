@@ -6,6 +6,7 @@
 // ═════════════════════════════════════════════════════════
 
 import { escapeHtml } from '../utils/sanitization.js';
+import { sendToTab } from '../messaging/themeMessaging.js';
 
 // Convert any CSS color value to #rrggbb — canvas-based (replaces colord for popup which is not bundled)
 export function toHex(colorValue) {
@@ -43,10 +44,7 @@ let _showAll = false;
 let _search = '';
 
 function sendRescan() {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs[0]?.id) return;
-    chrome.tabs.sendMessage(tabs[0].id, { type: 'BB_THEME_RESCAN' }).catch(() => {});
-  });
+  return sendToTab({ type: 'BB_THEME_RESCAN' });
 }
 
 function renderSwatches() {

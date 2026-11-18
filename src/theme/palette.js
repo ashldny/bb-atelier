@@ -3,28 +3,29 @@
 //  Derives ALL theme tokens from just 3 colors (bg + accent + navbar)
 // ═════════════════════════════════════════════════════════
 
-import { isDark, lighten, darken, mix, contrastText, brighten } from './colorUtils.js';
+import { isDark, lighten, darken, mix, contrastText, brighten, readableOn } from './colorUtils.js';
 
 /**
- * Generate a full palette object from 3 user-chosen colors
+ * Generate a full palette object from user-chosen colors
  *
- * @param {string} pageBg  - Page background hex
- * @param {string} accent  - Brand / accent hex
- * @param {string} navbar  - Navbar / sidebar hex
+ * @param {string} pageBg   - Page background hex
+ * @param {string} accent   - Brand / accent hex
+ * @param {string} navbar   - Navbar / sidebar hex
+ * @param {string} [pageText] - Optional user-chosen page text color (overrides auto-derive)
  * @returns {{ overrides: object, darkOverrides: object, staticVars: string }}
  */
-export function derivePalette(pageBg, accent, navbar) {
+export function derivePalette(pageBg, accent, navbar, pageText) {
   const dark = isDark(pageBg);
 
   // ─── Base tones ───
   const bg = pageBg;
   const paper = dark ? lighten(bg, 20) : darken(bg, 3);
-  const textPrimary = contrastText(bg);
-  const textSecondary = dark ? lighten(bg, 75) : darken(bg, 35);
+  const textPrimary = pageText || contrastText(bg);
+  const textSecondary = mix(textPrimary, bg, 0.2);
   const textDisabled = dark ? mix(bg, '#ffffff', 0.35) : mix(bg, '#000000', 0.25);
   const textHint = dark ? mix(bg, '#ffffff', 0.3) : mix(bg, '#000000', 0.2);
 
-  const useNavbar = navbar && navbar !== pageBg && navbar !== '#000000';
+  const useNavbar = Boolean(navbar);
   const primaryMain = useNavbar ? navbar : textPrimary;
   const primaryContrast = useNavbar ? contrastText(navbar) : dark ? '#262626' : '#ffffff';
   const primaryLight = useNavbar
@@ -49,9 +50,11 @@ export function derivePalette(pageBg, accent, navbar) {
   const brandLight = lighten(accent, 40);
   const brandDark = darken(accent, 20);
 
-  const linkActive = accent;
-  const linkHover = lighten(accent, 15);
-  const linkSelected = accent;
+  // Links sit on the page background, so the raw accent may be unreadable
+  // (e.g. maroon on near-black). Keep the hue but guarantee WCAG AA.
+  const linkActive = readableOn(accent, bg);
+  const linkHover = readableOn(lighten(accent, 15), bg);
+  const linkSelected = linkActive;
   const linkDisabled = dark
     ? mix(brighten(accent, 50), accent, 0.5)
     : mix(darken(accent, 50), accent, 0.3);
@@ -107,6 +110,20 @@ export function derivePalette(pageBg, accent, navbar) {
   // ─── Indicator colors — derived from accent ───
   const indPrimary = isDark(accent) ? lighten(accent, 30) : accent;
   const indSecondary = isDark(error) ? lighten(error, 20) : error;
+
+  // ─── Canonical theme tokens (spec) ───
+  const pageBgLighter = b3;
+  const pageBgDarker = borderMain;
+  const navbarBg = useNavbar ? navbar : primaryMain;
+  const navbarBgDarker = useNavbar ? darken(navbar, 15) : primaryDark;
+
+  // Page text tokens (spec): page-text-1 (user/darkest), page-text-2 (80%), page-text-3 (30%)
+  // page-text-2 and page-text-3 are now CSS-derived per mode (see cssBuilder.js)
+  // --page-text-1 stays fixed; tiers flip direction via .mode-light/.mode-dark
+  const pageText1 = pageText || textPrimary;
+
+  const navbarText = primaryContrast;
+  const accentText = brandContrast;
 
   // ─── Static tokens (grade colors, greys, common) ───
   function staticVars() {
@@ -167,6 +184,25 @@ export function derivePalette(pageBg, accent, navbar) {
 
   // ─── Build the light-mode overrides object ───
   const overrides = {
+    // ─── Qatar University Ultra — Primary Theme CSS Variables (aliases) ───
+    '--brand-color-primary': brandMain,
+    '--brand-color-primary-light': brandLight,
+    '--brand-color-primary-dark': brandDark,
+    '--color-base-background': bg,
+    '--color-surface-background': paper,
+    '--color-text-primary': textPrimary,
+    '--color-text-secondary': textSecondary,
+    // ─── Canonical tokens (spec) ───
+    '--page-bg': bg,
+    '--page-bg-lighter': pageBgLighter,
+    '--page-bg-darker': pageBgDarker,
+    '--page-text-1': pageText1,
+    // --page-text-2 and --page-text-3 derived via CSS (mode-scoped in cssBuilder.js)
+    '--navbar-bg': navbarBg,
+    '--navbar-bg-darker': navbarBgDarker,
+    '--navbar-text': navbarText,
+    '--accent': accent,
+    '--accent-text': accentText,
     // Brand
     '--palette-mode': dark ? 'dark' : 'light',
     '--palette-brand-main': brandMain,

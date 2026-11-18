@@ -1,288 +1,154 @@
-// ═════════════════════════════════════════════════════════
-//  Bb Atelier — Theme Tab UI
-//  Handles color pickers, font upload and theme presets
-//  Presets / Colors / Font are sub-tabs inside Theme
-// ═════════════════════════════════════════════════════════
-
+import { normalizePalette } from '../theme/settings.js';
 import { derivePalette } from '../theme/palette.js';
-import {
-  applyThemeToBb,
-  applyFont,
-} from '../messaging/themeMessaging.js';
-import { MAX_FONT_SIZE, validateFileSize } from '../utils/sanitization.js';
-import { DEFAULT_BG, DEFAULT_ACCENT, DEFAULT_NAVBAR } from '../utils/constants.js';
+import { contrastText, isDark } from '../theme/colorUtils.js';
 import { PRESET_THEMES } from '../theme/presets.js';
-import { showToast } from '../utils/ui.js';
+import { sendToTab, previewThemeOnBb, restoreThemeOnBb } from '../messaging/themeMessaging.js';
+import { showToast, debounce } from '../utils/ui.js';
+import { escapeHtml } from '../utils/sanitization.js';
+import { initTabGroup } from './tabs.js';
 import { updateContrastBadges } from './contrastBadges.js';
+import { initFonts } from './fonts.js';
 
-/**
- * Initialize the Theme tab UI (colour pickers, font, presets)
- */
-export function initTheme() {
-  renderPresets();
-  setupMasterToggle();
-  setupSubTabs();
-  setupAutoApply();
-  updateContrastBadges();
-
-  // Font — live preview + apply on select change
-  const fontSelect = document.getElementById('fontSelect');
-  const fontUpload = document.getElementById('fontUpload');
-
-  fontSelect.addEventListener('change', (e) => {
-    const masterToggle = document.getElementById('masterToggle');
-    if (masterToggle && !masterToggle.checked) return;
-    const val = e.target.value;
-    if (val && val !== 'custom') {
-      applyFont(val);
-      chrome.storage.local.set({ font: val, fontName: val });
-      updateFontPreviewLive(val);
-    }
-  });
-
-  // Upload Font — separate button (icon in HTML)
-  document.getElementById('fontUploadBtn').addEventListener('click', () => {
-    fontUpload.click();
-  });
-
-  fontUpload.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    // Validate font file by extension
-    const ext = file.name.split('.').pop().toLowerCase();
-    if (!['ttf', 'otf', 'woff', 'woff2'].includes(ext)) {
-      showToast('Invalid font file type', 'error');
-      e.target.value = '';
-      return;
-    }
-    if (!validateFileSize(file.size, MAX_FONT_SIZE)) {
-      showToast('Font too large — max 512KB', 'error');
-      e.target.value = '';
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target.result;
-      // Binary blobs stored in local (sync caps at ~100KB per item)
-      chrome.storage.local.set({ font: dataUrl, fontName: file.name }, () => {
-        applyFont(dataUrl);
-        addUploadedFontOption(file.name, dataUrl);
-        updateFontPreviewLive(dataUrl);
-      });
-    };
-    reader.onerror = () => {
-      showToast('Failed to read font file', 'error');
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  });
-}
-
-/**
- * Update the live font preview element
- * @param {string} font - family name or data-url
- */
-export function updateFontPreviewLive(font) {
-  const preview = document.getElementById('fontPreview');
-  if (!preview) return;
-  if (font.startsWith('data:')) {
-    preview.style.fontFamily = 'CustomFont, sans-serif';
-    let face = document.getElementById('bb-preview-face');
-    if (!face) {
-      face = document.createElement('style');
-      face.id = 'bb-preview-face';
-      document.head.appendChild(face);
-    }
-    face.textContent = `@font-face{font-family:'CustomFont';src:url('${font}') format('truetype');}`;
-  } else {
-    preview.style.fontFamily = font;
-  }
-}
-
-/**
- * Add an uploaded font to the grouped select and select it
- * @param {string} name - human label
- * @param {string} dataUrl - data-url value
- */
-function addUploadedFontOption(name, dataUrl) {
-  const group = document.getElementById('fontUploadGroup');
-  const select = document.getElementById('fontSelect');
-  if (!group || !select) return;
-  group.style.display = 'block';
-  const opt = document.createElement('option');
-  opt.value = dataUrl;
-  opt.textContent = name;
-  group.appendChild(opt);
-  select.value = dataUrl;
-}
-
-/**
- * Sub-navbar inside Theme tab: Presets | Colors | Font
- */
-function setupSubTabs() {
-  const btns = document.querySelectorAll('.sub-tab-btn');
-  const panels = document.querySelectorAll('.sub-content');
-  if (!btns.length || !panels.length) return;
-  btns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const target = btn.dataset.subtab;
-      btns.forEach((b) => {
-        b.classList.toggle('active', b === btn);
-        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
-      });
-      panels.forEach((p) => {
-        p.classList.toggle('active', p.dataset.subtab === target);
-      });
-    });
-  });
-}
-
-/**
- * Auto-apply theme when any color picker changes (replaces Apply button)
- * Debounced to avoid spamming storage/messaging on drag
- */
-function setupAutoApply() {
-  const ids = ['pageBgPicker', 'activeTabGlowPicker', 'navbarPicker'];
-  let timer = null;
-  ids.forEach((id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('input', () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        applyCurrentTheme();
-        updateContrastBadges();
-      }, 80);
-    });
-    el.addEventListener('change', () => {
-      clearTimeout(timer);
-      applyCurrentTheme();
-      updateContrastBadges();
-    });
-  });
-}
-
-/**
- * Enable / disable the colour picker section (kept for compat)
- * @param {boolean} _enabled
- */
-export function toggleColorSection(_enabled) {
-  // no-op: colors now in sub-tab, always visible when sub-tab active
-}
-
-/**
- * Read the current colour pickers, derive palette, apply theme
- */
-export function applyCurrentTheme() {
-  const masterToggle = document.getElementById('masterToggle');
-  if (masterToggle && !masterToggle.checked) return;
-  const pageBg = document.getElementById('pageBgPicker').value || DEFAULT_BG;
-  const accent = document.getElementById('activeTabGlowPicker').value || DEFAULT_ACCENT;
-  const navbar = document.getElementById('navbarPicker').value || DEFAULT_NAVBAR;
-
-  const { overrides, darkOverrides, staticVars } = derivePalette(pageBg, accent, navbar);
-
-  chrome.storage.sync.set(
-    {
-      customMode: true,
-      pageBg: pageBg,
-      accent: accent,
-      navbar: navbar,
-    },
-    () => {
-      applyThemeToBb(overrides, darkOverrides, staticVars);
-      updateContrastBadges();
-      showToast('Theme applied');
-    }
+let palette;
+let commitTimer;
+const preview = debounce((value) => {
+  const { overrides, darkOverrides, staticVars } = derivePalette(
+    value.pageBg,
+    value.accent,
+    value.navbar,
+    value.pageText
   );
+  previewThemeOnBb(overrides, darkOverrides, staticVars);
+}, 100);
+
+export function readPalette() {
+  return normalizePalette({
+    pageBg: document.getElementById('pageBgPicker').value,
+    accent: document.getElementById('activeTabGlowPicker').value,
+    navbar: document.getElementById('navbarPicker').value,
+    pageText: document.getElementById('autoTextToggle').checked
+      ? null
+      : document.getElementById('pageTextPicker').value,
+  });
 }
 
-// ─── Preset Themes — split Light / Dark, click to apply only (no hover preview) ───
+export function setPaletteInputs(value) {
+  palette = normalizePalette(value);
+  document.getElementById('pageBgPicker').value = palette.pageBg;
+  document.getElementById('activeTabGlowPicker').value = palette.accent;
+  document.getElementById('navbarPicker').value = palette.navbar;
+  document.getElementById('pageTextPicker').value =
+    palette.pageText || contrastText(palette.pageBg);
+  document.getElementById('autoTextToggle').checked = palette.pageText === null;
+  document.getElementById('pageTextPicker').disabled = palette.pageText === null;
+  updateContrastBadges();
+  highlightPreset();
+}
 
-function isLightPreset(preset) {
-  const hex = preset.pageBg.replace('#', '');
-  const r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
-  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return lum > 0.6;
+function highlightPreset() {
+  const current = readPalette();
+  document.querySelectorAll('.preset-card').forEach((button) => {
+    const preset = PRESET_THEMES[Number(button.dataset.index)];
+    const selected =
+      ['pageBg', 'accent', 'navbar'].every(
+        (key) => current[key].toLowerCase() === preset[key].toLowerCase()
+      ) && current.pageText === (preset.pageText?.toLowerCase() || null);
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+}
+
+export async function applyCurrentTheme(value = readPalette(), { notify = false } = {}) {
+  clearTimeout(commitTimer);
+  preview.cancel();
+  const next = normalizePalette(value);
+  setPaletteInputs(next);
+  try {
+    await chrome.storage.sync.set(next);
+    // Storage updates every open Blackboard tab; this also recovers a missing receiver.
+    await sendToTab({ action: 'applyThemeCSS' });
+    document.dispatchEvent(new Event('bb-status-change'));
+    if (notify) showToast('Theme saved');
+  } catch {
+    showToast('Could not save the theme. Try again.', 'error');
+  }
 }
 
 function renderPresets() {
-  const lightGrid = document.getElementById('presetGridLight');
-  const darkGrid = document.getElementById('presetGridDark');
-  if (!lightGrid || !darkGrid) return;
-
-  const light = PRESET_THEMES.filter(isLightPreset);
-  const dark = PRESET_THEMES.filter((p) => !isLightPreset(p));
-
-  function cardHtml(preset, i) {
-    return `
-    <div class="preset-card" data-index="${i}">
-      <div class="preset-dots">
-        <span class="preset-dot" style="background:${preset.pageBg}"></span>
-        <span class="preset-dot" style="background:${preset.navbar}"></span>
-        <span class="preset-dot" style="background:${preset.accent}"></span>
-      </div>
-      <span class="preset-name">${preset.name}</span>
-    </div>
-  `;
-  }
-
-  const lightHtml = light.map((p) => cardHtml(p, PRESET_THEMES.indexOf(p))).join('');
-  const darkHtml = dark.map((p) => cardHtml(p, PRESET_THEMES.indexOf(p))).join('');
-  lightGrid.innerHTML = lightHtml;
-  darkGrid.innerHTML = darkHtml;
-
-  function bindGrid(grid) {
+  for (const [name, dark] of [
+    ['Light', false],
+    ['Dark', true],
+  ]) {
+    const grid = document.getElementById(`presetGrid${name}`);
+    grid.innerHTML = PRESET_THEMES.map((preset, index) => ({ preset, index }))
+      .filter(({ preset }) => isDark(preset.pageBg) === dark)
+      .map(
+        ({
+          preset,
+          index,
+        }) => `<button type="button" class="preset-card" data-index="${index}" aria-pressed="false">
+        <span class="preset-mini" aria-hidden="true" style="--mini-bg:${escapeHtml(preset.pageBg)};--mini-nav:${escapeHtml(preset.navbar)};--mini-accent:${escapeHtml(preset.accent)};--mini-text:${escapeHtml(preset.pageText || contrastText(preset.pageBg))}">
+          <span class="mini-nav"><span class="mini-nav-item"></span></span>
+          <span class="mini-page"><span class="mini-title"></span><span class="mini-line"></span><span class="mini-line short"></span></span>
+        </span><span class="preset-name">${escapeHtml(preset.name)}</span>
+        <svg class="preset-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+      </button>`
+      )
+      .join('');
     grid.querySelectorAll('.preset-card').forEach((card) => {
-      const index = parseInt(card.dataset.index, 10);
-      const preset = PRESET_THEMES[index];
-      card.addEventListener('click', () => {
-        document.getElementById('pageBgPicker').value = preset.pageBg;
-        document.getElementById('activeTabGlowPicker').value = preset.accent;
-        document.getElementById('navbarPicker').value = preset.navbar;
-        applyCurrentTheme();
-        document.querySelectorAll('.preset-card').forEach((c) => c.classList.remove('active'));
-        card.classList.add('active');
+      const preset = PRESET_THEMES[Number(card.dataset.index)];
+      const value = { ...preset, pageText: preset.pageText || null };
+      card.addEventListener('click', () => applyCurrentTheme(value, { notify: true }));
+      card.addEventListener('mouseenter', () => {
+        if (document.getElementById('masterToggle').checked) preview(value);
+      });
+      card.addEventListener('mouseleave', () => {
+        preview.cancel();
+        restoreThemeOnBb();
       });
     });
   }
-  bindGrid(lightGrid);
-  bindGrid(darkGrid);
 }
 
-// ─── Master Toggle ───────────────────────────────────────
-
-function setupMasterToggle() {
+export function initTheme(sync, local) {
+  renderPresets();
+  setPaletteInputs(sync);
+  initFonts(local);
+  initTabGroup('.sub-tab-btn', '.sub-content', 'subtab');
   const toggle = document.getElementById('masterToggle');
-
-  chrome.storage.sync.get(['masterEnabled'], (data) => {
-    const enabled = data.masterEnabled !== false;
+  const controls = document.getElementById('customizationControls');
+  function masterState(enabled) {
     toggle.checked = enabled;
+    controls.disabled = !enabled;
+    document.getElementById('pausedNotice').hidden = enabled;
     document.body.classList.toggle('master-off', !enabled);
-  });
-
-  toggle.addEventListener('change', () => {
+  }
+  masterState(sync.masterEnabled !== false);
+  toggle.addEventListener('change', async () => {
     const enabled = toggle.checked;
-    chrome.storage.sync.set({ masterEnabled: enabled });
-    document.body.classList.toggle('master-off', !enabled);
-
-    if (enabled) {
-      sendToTab({ action: 'enableAll' });
-      applyCurrentTheme();
-      chrome.storage.local.get(['font'], (data) => {
-        if (data.font) {
-          applyFont(data.font);
-        }
-      });
-    } else {
-      sendToTab({ action: 'disableAll' });
+    masterState(enabled);
+    try {
+      await chrome.storage.sync.set({ masterEnabled: enabled });
+      await sendToTab({ action: enabled ? 'enableAll' : 'disableAll' });
+      document.dispatchEvent(new Event('bb-status-change'));
+    } catch {
+      masterState(!enabled);
+      showToast('Could not save this change.', 'error');
     }
   });
-}
-
-function sendToTab(message) {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs[0]?.id) return;
-    chrome.tabs.sendMessage(tabs[0].id, message).catch(() => {});
-  });
+  for (const id of ['pageBgPicker', 'activeTabGlowPicker', 'navbarPicker', 'pageTextPicker']) {
+    const picker = document.getElementById(id);
+    picker.addEventListener('input', () => {
+      if (id === 'pageBgPicker' && document.getElementById('autoTextToggle').checked) {
+        document.getElementById('pageTextPicker').value = contrastText(picker.value);
+      }
+      updateContrastBadges();
+      highlightPreset();
+      preview(readPalette());
+      clearTimeout(commitTimer);
+      commitTimer = setTimeout(() => applyCurrentTheme(), 500);
+    });
+    picker.addEventListener('change', () => applyCurrentTheme());
+  }
+  document.getElementById('autoTextToggle').addEventListener('change', () => applyCurrentTheme());
 }

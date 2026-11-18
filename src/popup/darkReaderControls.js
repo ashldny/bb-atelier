@@ -6,16 +6,10 @@
 
 import { DEFAULT_THEME, normalizeTheme, parseSelectorsTextarea } from '../theme/darkReaderTheme.js';
 import { showToast } from '../utils/ui.js';
+import { sendToTab } from '../messaging/themeMessaging.js';
 
 let _saveTimer = null;
 let _currentTheme = { ...DEFAULT_THEME };
-
-function sendToTab(message) {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs[0]?.id) return;
-    chrome.tabs.sendMessage(tabs[0].id, message).catch(() => {});
-  });
-}
 
 function readFormToTheme() {
   const brightness = Number(document.getElementById('drBrightness').value);
@@ -242,7 +236,7 @@ export function initDarkReaderControls() {
   // ── Sync main 3-color pickers → Dark Reader scheme (combined tab) ──
   // Page Background → darkSchemeBackgroundColor (and light when in light mode)
   // This keeps the "simple 3 colors" UX while feeding the Dark Reader engine
-  const mainPickers = ['pageBgPicker', 'activeTabGlowPicker', 'navbarPicker'];
+  const mainPickers = ['pageBgPicker', 'activeTabGlowPicker'];
   mainPickers.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;

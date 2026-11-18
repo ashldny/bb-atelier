@@ -110,7 +110,28 @@ export function mix(hex1, hex2, ratio) {
  * @returns {string}
  */
 export function contrastText(bgHex) {
-  return isDark(bgHex) ? '#ffffff' : '#262626';
+  const value = luminance(bgHex);
+  return 1.05 / (value + 0.05) >= (value + 0.05) / 0.05 ? '#ffffff' : '#000000';
+}
+
+export function contrastRatio(first, second) {
+  const values = [luminance(first), luminance(second)].sort((a, b) => b - a);
+  return (values[0] + 0.05) / (values[1] + 0.05);
+}
+
+/**
+ * Mix two colors using CSS color-mix semantics (sRGB space)
+ * @param {string} color1 - Base color (e.g., var(--page-text-1))
+ * @param {string} color2 - Mix color (e.g., '#ffffff')
+ * @param {number} ratio - Ratio of color2 (0 = all color1, 1 = all color2)
+ *                         Matches CSS: color-mix(in srgb, color1 (1-ratio)*100%, color2 ratio*100%)
+ * @returns {string} Mixed hex color
+ */
+export function colorMix(color1, color2, ratio) {
+  const c1 = hexToRgb(color1);
+  const c2 = hexToRgb(color2);
+  const inv = 1 - ratio;
+  return rgbToHex(c1.r * inv + c2.r * ratio, c1.g * inv + c2.g * ratio, c1.b * inv + c2.b * ratio);
 }
 
 /**
@@ -121,4 +142,21 @@ export function contrastText(bgHex) {
  */
 export function brighten(hex, pct) {
   return lighten(hex, pct);
+}
+
+/**
+ * Nudge a colour toward white (on dark backgrounds) or black (on light ones)
+ * until it reaches the target contrast ratio. Keeps the hue recognisable.
+ * @param {string} hex - foreground colour
+ * @param {string} bgHex - background it sits on
+ * @param {number} [min=4.5] - WCAG AA for normal text
+ * @returns {string}
+ */
+export function readableOn(hex, bgHex, min = 4.5) {
+  const target = isDark(bgHex) ? '#ffffff' : '#000000';
+  for (let step = 0; step <= 20; step++) {
+    const candidate = mix(hex, target, step / 20);
+    if (contrastRatio(candidate, bgHex) >= min) return candidate;
+  }
+  return target;
 }

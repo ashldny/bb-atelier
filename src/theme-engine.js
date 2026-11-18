@@ -8,6 +8,7 @@ import { enable, disable, exportGeneratedCSS, setFetchMethod } from 'darkreader'
 import * as css from 'css';
 import valueParser from 'postcss-value-parser';
 import { colord } from 'colord';
+import { hardenedFetch } from './utils/fetchGuard.js';
 
 // ─── Color props — include shorthands now (tokenized, not whole-value) ──
 export const COLOR_PROPS = new Set([
@@ -98,7 +99,7 @@ export async function detectColors() {
   };
 
   try {
-    setFetchMethod(window.fetch.bind(window));
+    setFetchMethod(hardenedFetch);
   } catch (_e) {
     /* ignore */
   }

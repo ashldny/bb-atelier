@@ -1,207 +1,163 @@
-// ═════════════════════════════════════════════════════════
-//  Bb Atelier — Settings Tab
-//  Version, reset, cache, import/export, custom domain, engine
-// ═════════════════════════════════════════════════════════
+import { showToast, setToastPreference } from '../utils/ui.js';
+import { domainToPattern } from '../utils/domains.js';
+import { updateOptions } from '../utils/storage.js';
+import { downloadJson } from '../utils/files.js';
+import { validateSettingsImport } from '../utils/importValidation.js';
+import { validateFileSize } from '../utils/sanitization.js';
+import { sendToTab, invalidateTargetTab } from '../messaging/themeMessaging.js';
+import { DEFAULT_SETTINGS } from '../utils/constants.js';
+import { setPaletteInputs } from './theme.js';
+import { restoreFontControl } from './fonts.js';
 
-import { showToast } from '../utils/ui.js';
-
-function domainToPattern(input) {
-  const raw = String(input || '').trim();
-  if (!raw) return null;
-  if (raw.includes('://') && raw.includes('*')) return raw;
-  let host = raw;
-  try {
-    if (host.includes('://')) host = new URL(host).hostname;
-    else host = host.split('/')[0];
-  } catch { host = host.split('/')[0]; }
-  host = host.replace(/^\*\./, '').replace(/^\./, '');
-  if (!host || host.length < 3 || !host.includes('.')) return null;
-  if (!/^[a-zA-Z0-9.-]+$/.test(host)) return null;
-  return `*://${host}/*`;
-}
-
-export function initSettingsTab() {
-  // Version label
-  try {
-    const v = chrome.runtime.getManifest()?.version || '';
-    const el = document.getElementById('versionLabel');
-    if (el && v) el.textContent = `v${v} — Bb Atelier`;
-  } catch (_e) { void _e; }
-
-  // ── Custom Domain ──
-  const domainInput = document.getElementById('customDomainInput');
-  const domainBtn = document.getElementById('saveCustomDomainBtn');
-  const domainStatus = document.getElementById('customDomainStatus');
-
-  function setStatus(msg, ok) {
-    if (!domainStatus) return;
-    domainStatus.textContent = msg;
-    domainStatus.className = 'settings-status ' + (ok ? 'ok' : ok === false ? 'err' : '');
+export function initSettingsTab(sync) {
+  document.getElementById('versionLabel').textContent =
+    `Bb Atelier · ${chrome.runtime.getManifest().version}`;
+  const input = document.getElementById('customDomainInput');
+  const button = document.getElementById('saveCustomDomainBtn');
+  const status = document.getElementById('customDomainStatus');
+  input.value = sync.bbTheme?.customDomain || '';
+  function showStatus(text, ok) {
+    status.textContent = text;
+    status.className = `settings-status ${ok ? 'ok' : 'err'}`;
   }
-
-  // load existing
-  chrome.storage.sync.get(['bbTheme'], (data) => {
-    const d = data?.bbTheme?.customDomain || '';
-    if (domainInput) domainInput.value = d;
-    if (d) setStatus(`Active: ${d}`, true);
-  });
-
-  domainBtn?.addEventListener('click', async () => {
-    const raw = domainInput?.value?.trim() || '';
-    if (!raw) {
-      chrome.storage.sync.get(['bbTheme'], (data) => {
-        const bb = data.bbTheme || {};
-        delete bb.customDomain;
-        chrome.storage.sync.set({ bbTheme: bb }, () => {
-          setStatus('Custom domain cleared', true);
-          showToast('Custom domain cleared');
-        });
-      });
-      return;
-    }
+  async function connectDomain() {
+    const raw = input.value.trim();
     const pattern = domainToPattern(raw);
-    if (!pattern) {
-      setStatus('Invalid domain — e.g. blackboard.my-uni.edu', false);
-      return;
-    }
-    // request host permission
+    if (raw && !pattern) return showStatus('Enter a domain such as blackboard.example.edu.', false);
+    button.disabled = true;
     try {
-      const granted = await chrome.permissions.request({ origins: [pattern] });
-      if (!granted) {
-        setStatus('Host permission denied', false);
+      // Request only from the original user gesture, before persisting the domain.
+      if (pattern && !(await chrome.permissions.request({ origins: [pattern] }))) {
+        showStatus('Site access was declined. Use Connect to try again.', false);
         return;
       }
-    } catch (_e) { void _e; }
-    chrome.storage.sync.get(['bbTheme'], (data) => {
-      const bb = data.bbTheme || {};
-      bb.customDomain = raw;
-      chrome.storage.sync.set({ bbTheme: bb }, () => {
-        chrome.runtime.sendMessage({ action: 'requestHostPermission', pattern }).catch(()=>{});
-        setStatus(`Saved: ${raw} → ${pattern}`, true);
-        showToast('Custom domain saved');
-      });
-    });
+      await updateOptions({ customDomain: raw });
+      invalidateTargetTab();
+      const result = await chrome.runtime.sendMessage({ action: 'syncCustomDomain' });
+      if (!result?.success)
+        throw new Error(result?.error || 'Could not connect this site. Try again.');
+      showStatus(
+        raw
+          ? 'Connected. Open Blackboard on this domain to customize it.'
+          : 'Custom domain removed.',
+        true
+      );
+      document.dispatchEvent(new Event('bb-status-change'));
+    } catch (error) {
+      showStatus(error.message, false);
+    } finally {
+      button.disabled = false;
+    }
+  }
+  button.addEventListener('click', connectDomain);
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') connectDomain();
   });
-
-  domainInput?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') domainBtn?.click();
-  });
-
-  // ── Engine ──
-  const engineRadios = document.querySelectorAll('input[name="engine"]');
-  chrome.storage.sync.get(['bbTheme'], (data) => {
-    const engine = data?.bbTheme?.engine || 'native';
-    engineRadios.forEach((r) => { r.checked = r.value === engine; });
-  });
-  engineRadios.forEach((r) => {
-    r.addEventListener('change', () => {
-      if (!r.checked) return;
-      chrome.storage.sync.get(['bbTheme'], (data) => {
-        const bb = data.bbTheme || {};
-        bb.engine = r.value;
-        chrome.storage.sync.set({ bbTheme: bb }, () => {
-          showToast(`Engine: ${r.value}`);
-          // notify content
-          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (!tabs[0]?.id) return;
-            if (r.value === 'darkreader') chrome.tabs.sendMessage(tabs[0].id, { action: 'drEnable' }).catch(()=>{});
-            else chrome.tabs.sendMessage(tabs[0].id, { action: 'drDisable' }).catch(()=>{});
-          });
-        });
-      });
-    });
-  });
-
-  // ── General toggles ──
-  const autoApply = document.getElementById('autoApplyToggle');
-  const showToastToggle = document.getElementById('showToastToggle');
-
-  chrome.storage.sync.get(['bbTheme'], (data) => {
-    const bb = data.bbTheme || {};
-    if (autoApply) autoApply.checked = bb.autoApply !== false;
-    if (showToastToggle) showToastToggle.checked = bb.showToast !== false;
-  });
-
-  autoApply?.addEventListener('change', () => {
-    chrome.storage.sync.get(['bbTheme'], (data) => {
-      const bb = data.bbTheme || {};
-      bb.autoApply = autoApply.checked;
-      chrome.storage.sync.set({ bbTheme: bb });
-    });
-  });
-  showToastToggle?.addEventListener('change', () => {
-    chrome.storage.sync.get(['bbTheme'], (data) => {
-      const bb = data.bbTheme || {};
-      bb.showToast = showToastToggle.checked;
-      chrome.storage.sync.set({ bbTheme: bb });
-    });
-  });
-
-  // ── Data actions ──
-  document.getElementById('resetAllBtn')?.addEventListener('click', () => {
-    if (!confirm('Reset all Bb Atelier settings to defaults? This will clear themes, colors and advanced options.')) return;
-    chrome.storage.sync.remove(['bbTheme','pageBg','accent','navbar','customMode','bbColorMap','activeTab'], () => {
-      chrome.storage.local.remove(['cachedCSS','font','fontName','bbDetectedColors'], () => {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs[0]?.id) chrome.tabs.sendMessage(tabs[0].id, { action: 'resetTheme' }).catch(()=>{});
-          if (tabs[0]?.id) chrome.tabs.sendMessage(tabs[0].id, { action: 'drDisable' }).catch(()=>{});
-        });
-        showToast('Settings reset');
-        setTimeout(()=> location.reload(), 600);
-      });
-    });
-  });
-
-  document.getElementById('clearCacheBtn')?.addEventListener('click', () => {
-    chrome.storage.local.remove(['cachedCSS','bbDetectedColors'], () => {
-      chrome.storage.sync.remove(['bbColorMap'], () => {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs[0]?.id) chrome.tabs.sendMessage(tabs[0].id, { type: 'BB_THEME_RESCAN' }).catch(()=>{});
-        });
-        showToast('Cache cleared — rescanning');
-      });
-    });
-  });
-
-  document.getElementById('exportSettingsBtn')?.addEventListener('click', () => {
-    chrome.storage.sync.get(null, (syncData) => {
-      chrome.storage.local.get(null, (localData) => {
-        const payload = { version: 1, exportedAt: new Date().toISOString(), sync: syncData, local: { font: localData.font, fontName: localData.fontName, cachedCSS: localData.cachedCSS } };
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'bb-atelier-settings.json';
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('Settings exported');
-      });
-    });
-  });
-
-  const importBtn = document.getElementById('importSettingsBtn');
-  const importFile = document.getElementById('importSettingsFile');
-  importBtn?.addEventListener('click', () => importFile?.click());
-  importFile?.addEventListener('change', (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
+  document.querySelectorAll('input[name="engine"]').forEach((radio) => {
+    radio.checked = radio.value === (sync.bbTheme?.engine || 'native');
+    radio.addEventListener('change', async () => {
+      if (!radio.checked) return;
       try {
-        const data = JSON.parse(ev.target.result);
-        if (!data.sync) throw new Error('Invalid');
-        chrome.storage.sync.set(data.sync, () => {
-          if (data.local) chrome.storage.local.set(data.local, () => {
-            showToast('Settings imported — reloading');
-            setTimeout(()=> location.reload(), 800);
-          });
-          else { showToast('Settings imported'); setTimeout(()=> location.reload(), 800); }
-        });
+        await updateOptions({ engine: radio.value });
+        await sendToTab({ action: 'refreshSettings' });
+        showToast(radio.value === 'native' ? 'Using native styling' : 'Using Dark Reader');
       } catch {
-        showToast('Invalid settings file', 'error');
+        showToast('Could not change the engine.', 'error');
       }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
+    });
   });
+  const autoApply = document.getElementById('autoApplyToggle');
+  const toastToggle = document.getElementById('showToastToggle');
+  autoApply.checked = sync.bbTheme?.autoApply !== false;
+  toastToggle.checked = sync.bbTheme?.showToast !== false;
+  autoApply.addEventListener('change', () =>
+    updateOptions({ autoApply: autoApply.checked }).catch(() =>
+      showToast('Could not save this setting.', 'error')
+    )
+  );
+  toastToggle.addEventListener('change', () => {
+    setToastPreference(toastToggle.checked);
+    updateOptions({ showToast: toastToggle.checked }).catch(() =>
+      showToast('Could not save this setting.', 'error')
+    );
+  });
+  document.getElementById('clearCacheBtn').addEventListener('click', async () => {
+    await chrome.storage.local.remove(['cachedCSS', 'bbDetectedColors']);
+    await sendToTab({ action: 'refreshSettings' });
+    showToast('Cache cleared');
+  });
+  document.getElementById('resetAllBtn').addEventListener('click', async () => {
+    if (
+      !confirm(
+        'Reset all customization? This removes saved themes, fonts, covers and the image library. Export a backup first if you want to keep them.'
+      )
+    )
+      return;
+    try {
+      await chrome.storage.sync.clear();
+      await chrome.storage.local.clear();
+      await chrome.storage.sync.set(DEFAULT_SETTINGS);
+      refreshUi(DEFAULT_SETTINGS, {});
+      await sendToTab({ action: 'refreshSettings' });
+      showToast('Reset to Default Dark');
+    } catch {
+      showToast('Could not complete the reset. Try again.', 'error');
+    }
+  });
+  document.getElementById('exportSettingsBtn').addEventListener('click', async () => {
+    const [savedSync, local] = await Promise.all([
+      chrome.storage.sync.get(null),
+      chrome.storage.local.get(null),
+    ]);
+    delete local.cachedCSS;
+    delete local.bbDetectedColors;
+    downloadJson(
+      { version: 2, exportedAt: new Date().toISOString(), sync: savedSync, local },
+      'bb-atelier-settings.json'
+    );
+  });
+  const fileInput = document.getElementById('importSettingsFile');
+  document.getElementById('importSettingsBtn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    fileInput.value = '';
+    if (!file) return;
+    try {
+      if (!validateFileSize(file.size, 30 * 1024 * 1024))
+        throw new Error('Choose a backup under 30 MB.');
+      const data = validateSettingsImport(JSON.parse(await file.text()));
+      // A backup cannot silently grant access to another website.
+      const pattern = domainToPattern(data.sync.bbTheme.customDomain);
+      if (pattern && !(await chrome.permissions.contains({ origins: [pattern] }))) {
+        data.sync.bbTheme.customDomain = '';
+        showStatus('Custom domain needs site access. Enter it above and use Connect.', false);
+      }
+      await chrome.storage.local.set(data.local);
+      await chrome.storage.sync.set(data.sync);
+      refreshUi(data.sync, data.local);
+      await sendToTab({ action: 'refreshSettings' });
+      showToast('Backup imported');
+    } catch (error) {
+      showToast(error.message || 'Could not import this backup.', 'error');
+    }
+  });
+
+  function refreshUi(next, local) {
+    invalidateTargetTab();
+    setPaletteInputs(next);
+    restoreFontControl(local);
+    input.value = next.bbTheme?.customDomain || '';
+    autoApply.checked = next.bbTheme?.autoApply !== false;
+    toastToggle.checked = next.bbTheme?.showToast !== false;
+    setToastPreference(toastToggle.checked);
+    document.querySelectorAll('input[name="engine"]').forEach((radio) => {
+      radio.checked = radio.value === (next.bbTheme?.engine || 'native');
+    });
+    const toggle = document.getElementById('masterToggle');
+    toggle.checked = next.masterEnabled !== false;
+    document.getElementById('customizationControls').disabled = !toggle.checked;
+    document.getElementById('pausedNotice').hidden = toggle.checked;
+    document.body.classList.toggle('master-off', !toggle.checked);
+    document.dispatchEvent(new Event('bb-status-change'));
+  }
 }
