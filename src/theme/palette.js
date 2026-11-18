@@ -16,6 +16,7 @@ import {
   borderShade,
   shade,
 } from './colorUtils.js';
+import { courseColorTokens } from './courseColors.js';
 
 /**
  * Generate a full palette object from user-chosen colors
@@ -225,6 +226,8 @@ export function derivePalette(pageBg, accent, navbarChoice, pageText) {
     // Subtle hover tints: a step away from the surface, same hue.
     '--page-bg-hover': shade(bg, dark ? 0.05 : -0.045),
     '--navbar-hover': shade(navbarBg, isDark(navbarBg) ? 0.07 : -0.07),
+    // Course colour stripes, each blended toward the accent.
+    ...courseColorTokens(accent),
     // Blackboard's logo artwork is white; darken it on a light sidebar.
     '--logo-filter': isDark(navbarBg) ? 'none' : 'brightness(0) opacity(0.85)',
     // Brand

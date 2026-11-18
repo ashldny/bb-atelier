@@ -136,3 +136,27 @@ test('page ink and hover tints stay readable and subtle in light and dark themes
     assert.ok(contrastRatio(t['--navbar-text'], t['--navbar-hover']) >= 4.5, `${bg} hover text`);
   }
 });
+
+test('course colour indicators lean toward the accent but stay distinct', async () => {
+  const { BLACKBOARD_COURSE_COLORS, courseColorTokens, buildCourseColorCss } =
+    await import('../src/theme/courseColors.js');
+  const tokens = courseColorTokens('#2563eb');
+  const values = Object.values(tokens);
+  assert.equal(values.length, Object.keys(BLACKBOARD_COURSE_COLORS).length);
+  assert.equal(new Set(values).size, values.length, 'each course keeps its own colour');
+  // Every tinted colour is closer to the accent than the original was.
+  const dist = (a, b) => {
+    const [x, y] = [a, b].map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)));
+    return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
+  };
+  for (const [key, original] of Object.entries(BLACKBOARD_COURSE_COLORS))
+    assert.ok(dist(tokens[`--course-color-${key}`], '#2563eb') < dist(original, '#2563eb'), key);
+  const css = buildCourseColorCss();
+  assert.match(
+    css,
+    /\.element-card\.course-color-2::before \{ background-color: var\(--course-color-2\) !important; \}/
+  );
+  assert.match(css, /\.element-details\.course-color-classic \{ border-left-color/);
+  const { overrides } = derivePalette('#f0f4f8', '#2563eb', null, null);
+  assert.equal(overrides['--course-color-2'], tokens['--course-color-2']);
+});

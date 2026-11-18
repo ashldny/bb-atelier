@@ -29,6 +29,7 @@
 //  (плюс legacy --palette-* aliases for backward compat, never Dark Reader variables)
 
 import { purgeDarkReaderCss } from '../utils/cssSanitizer.js';
+import { buildCourseColorCss } from './courseColors.js';
 
 /**
  * Build the complete theme CSS string from palette overrides
@@ -212,6 +213,11 @@ base-side-menu .MuiDrawer-paper a.base-navigation-button-content:not(.active):is
   background-color: var(--navbar-hover) !important;
   color: var(--navbar-text);
 }
+/* Divider under the profile row: literal near-black in a hashed rule; match
+   the line under the logo (--navbar-bg-darker). */
+base-side-menu .MuiDrawer-paper a.MuiListItemButton-root {
+  border-bottom-color: var(--navbar-bg-darker);
+}
 /* Institution logo artwork is white; darken it when the sidebar is light. */
 base-side-menu .themed-logo-background-primary-fill img {
   filter: var(--logo-filter);
@@ -256,6 +262,64 @@ bb-ui-pagehelp .js-page-help .ms-Button.ms-Button--icon:is([aria-expanded='true'
   pointer-events: none;
 }
 
+/* TOOLTIPS — legacy Angular (.enhanced-tooltip + pip), MUI and Fluent UI.
+   One quiet surface everywhere: the sidebar colour, its text, a hairline. */
+.enhanced-tooltip,
+.MuiTooltip-tooltip,
+.ms-Tooltip .ms-Callout-main,
+.ms-Tooltip .ms-Callout-beak {
+  background-color: var(--navbar-bg) !important;
+  color: var(--navbar-text) !important;
+  border-color: var(--page-border) !important;
+}
+.enhanced-tooltip-pip {
+  background-color: var(--navbar-bg) !important;
+  border-color: var(--page-border) !important;
+}
+.MuiTooltip-arrow {
+  color: var(--navbar-bg) !important;
+}
+.enhanced-tooltip,
+.MuiTooltip-tooltip,
+.ms-Tooltip .ms-Callout {
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--page-text-1) 14%, transparent) !important;
+}
+
+/* ACTIVITY STREAM item icon: its box turns near-white on hover; keep it clear. */
+.stream-panel-activity-icon,
+.stream-item:hover .stream-panel-activity-icon,
+.stream-item-container:hover .stream-panel-activity-icon {
+  background-color: transparent !important;
+}
+
+/* GRADES page: course-activity chart icon is a black-filled legacy SVG. */
+.grade-progress-chart-link .svg-icon {
+  fill: var(--page-text-2);
+}
+.grade-progress-chart-link:is(:hover, :focus-visible) .svg-icon {
+  fill: var(--accent-on-page);
+}
+/* "Your instructor will allow access…" hatch: white stripes → page tones. */
+.base-grades-empty-element {
+  background-image: linear-gradient(
+    45deg,
+    var(--page-border) 1px,
+    var(--page-bg) 0,
+    var(--page-bg) calc(50% - 1px),
+    var(--page-border) 0,
+    var(--page-border) calc(50% + 1px),
+    var(--page-bg) 0,
+    var(--page-bg) calc(100% - 1px),
+    var(--page-border) 0
+  ) !important;
+}
+
+/* CALENDAR due dates: the white frame around each due item is the page. */
+.element-card-container.deadline-course {
+  background-color: var(--page-bg);
+  border-color: var(--page-border);
+}
+
 /* CALENDAR (Tier 2: literal colours in the cross-origin CDN stylesheet,
    which Tier 3 cannot read; these class names are stable, not hashed) */
 /* Schedule/Due Dates and Day/Month switches: inactive half is literal #fff
@@ -295,6 +359,10 @@ bb-ui-pagehelp .js-page-help .ms-Button.ms-Button--icon:is([aria-expanded='true'
    -> background-color property intentionally omitted (removed entirely)
    fallback only if selector can't be removed: background-color: var(--page-bg) !important; */
 `);
+
+  // Course colour stripes (generated per Blackboard course colour).
+  lines.push('/* COURSE COLOUR INDICATORS — see theme/courseColors.js */');
+  lines.push(buildCourseColorCss());
 
   const raw = lines.join('\n');
   return purgeDarkReaderCss(raw);
