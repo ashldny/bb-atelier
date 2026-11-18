@@ -1,5 +1,6 @@
 import { normalizeCoverEntry } from '../utils/covers.js';
 import { cssUrl } from '../utils/sanitization.js';
+import { beforeNextPaint, cancelBeforeNextPaint } from '../utils/frame.js';
 
 const CARD = '.element-card, [class*="course-element"], [class*="course-card"], article';
 const BANNER = '.course-banner';
@@ -81,7 +82,7 @@ export function createCoverController(styles) {
         else if (element.matches?.(BANNER) || element.querySelector?.(BANNER)) pending.add(element);
       }
     }
-    if (pending.size && !timer) timer = setTimeout(flush, 80);
+    if (pending.size && !timer) timer = beforeNextPaint(flush);
   });
 
   function apply(root) {
@@ -113,7 +114,7 @@ export function createCoverController(styles) {
     renderedEnabled = active;
     renderedBody = document.body;
     observer.disconnect();
-    clearTimeout(timer);
+    cancelBeforeNextPaint(timer);
     timer = null;
     pending.clear();
     enabled = active;

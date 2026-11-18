@@ -41,7 +41,16 @@ test('status colours and var() values are untouched; pale tints are blended', ()
 
 test('borders follow the hue-matched page border', () => {
   assert.equal(remapValue('border-top-color', '#cccccc'), 'var(--page-border)');
-  assert.match(remapValue('border-left-color', 'rgb(102, 102, 102)'), /--page-border/);
+  // MUI input outline (#666) stays close to the page, with a touch of ink.
+  assert.equal(
+    remapValue('border-left-color', 'rgb(102, 102, 102)'),
+    'color-mix(in srgb, var(--page-border), var(--page-text-1) 15%)'
+  );
+  // MUI hover outline (translucent black) is a step stronger instead of vanishing on dark pages.
+  assert.equal(
+    remapValue('border-top-color', 'rgba(0, 0, 0, 0.23)'),
+    'color-mix(in srgb, var(--page-border), var(--page-text-1) 23%)'
+  );
   assert.equal(remapValue('border-top-color', '#c23e37'), null);
 });
 

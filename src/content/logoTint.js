@@ -5,11 +5,12 @@
 // filter) and paints it in the sidebar text colour; cssBuilder.js gives the
 // disc itself the sidebar colour. Stopping removes every trace.
 
+import { beforeNextPaint, cancelBeforeNextPaint } from '../utils/frame.js';
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const DEFS_ID = 'bb-logo-knockout-defs';
 const LAYER_CLASS = 'bb-logo-knockout';
 const LOGO_SELECTOR = '.banner__logo';
-const THROTTLE = 300;
 
 function svg(tag, attrs) {
   const el = document.createElementNS(SVG_NS, tag);
@@ -69,7 +70,7 @@ export function createLogoTint() {
     tintLogos();
   }
   function schedule() {
-    if (!timer) timer = setTimeout(run, THROTTLE);
+    if (!timer) timer = beforeNextPaint(run);
   }
 
   return {
@@ -82,7 +83,7 @@ export function createLogoTint() {
     stop() {
       observer?.disconnect();
       observer = null;
-      clearTimeout(timer);
+      cancelBeforeNextPaint(timer);
       timer = 0;
       document.querySelectorAll(`.${LAYER_CLASS}`).forEach((el) => el.remove());
       document.getElementById(DEFS_ID)?.remove();

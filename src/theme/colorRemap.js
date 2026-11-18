@@ -166,8 +166,10 @@ export function mapColor(rgba, role, brandOf = createBrandMatcher()) {
     if (neutral && L <= 0.6) return withAlpha(ink(pct(L * 70, 45)), a);
     return null;
   }
-  // Borders: light hairlines → hue-matched page border; dark outlines (input
-  // fields) keep their strength but take the page's hue.
+  // Borders follow the page background, never a fixed grey: light hairlines →
+  // hue-matched page border; grey input outlines (MUI #666) → the page border
+  // with a touch of ink so fields stay findable; translucent black (MUI hover
+  // outlines, dividers) → the same blend, stronger as its opacity rises.
   if (neutral && L >= 0.6) {
     const p = pct(((1 - L) / 0.2) * 100, 100);
     return withAlpha(
@@ -178,7 +180,10 @@ export function mapColor(rgba, role, brandOf = createBrandMatcher()) {
     );
   }
   if (neutral && L >= 0.2) {
-    return withAlpha('color-mix(in srgb, var(--page-text-1) 55%, var(--page-border))', a);
+    return withAlpha('color-mix(in srgb, var(--page-border), var(--page-text-1) 15%)', a);
+  }
+  if (neutral && a < 1) {
+    return `color-mix(in srgb, var(--page-border), var(--page-text-1) ${pct(a * 100, 60)}%)`;
   }
   return null;
 }

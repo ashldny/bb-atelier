@@ -14,8 +14,9 @@ import {
   createBrandMatcher,
 } from '../theme/colorRemap.js';
 
+import { beforeNextPaint, cancelBeforeNextPaint } from '../utils/frame.js';
+
 const STYLE_ID = 'bb-theme-remap';
-const SCAN_INTERVAL = 400;
 // Blackboard paints its institution theme through these stable class hooks.
 const BRAND_SELECTOR = /color-selection|themed-/;
 const COLOR_TOKEN = /#[0-9a-f]{3,8}\b|rgba?\([^)]*\)/gi;
@@ -145,7 +146,8 @@ export function createRuleRemapper(styles) {
 
   function schedule() {
     if (!active || timer) return;
-    timer = setTimeout(scan, SCAN_INTERVAL);
+    // Before the next paint: newly mounted components never show Blackboard's colours.
+    timer = beforeNextPaint(scan);
   }
 
   return {
@@ -161,7 +163,7 @@ export function createRuleRemapper(styles) {
     },
     stop() {
       active = false;
-      clearTimeout(timer);
+      cancelBeforeNextPaint(timer);
       timer = 0;
       observer?.disconnect();
       observer = null;

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDom, createHub, waitFor, imageData } from './helpers.js';
+import { convexHull } from '../src/content/streamIcons.js';
 
 const card =
   '<article class="element-card"><span class="multi-column-course-id">CMPS360</span><h4 class="course-title">Data Visualization</h4><div class="course-banner" style="height:120px"><img src="original.jpg"></div></article>';
@@ -168,7 +169,7 @@ test('focal-point previews reuse image data and update only a small position sty
   assert.equal(hub.calls.writes.length, 0);
 });
 
-test('activity icons get a page-coloured silhouette underneath, removed again when disabled', async (t) => {
+test('activity icons get a page-coloured fill underneath, removed again when disabled', async (t) => {
   const icon =
     '<div class="stream-panel-activity-icon"><svg viewBox="0 0 38 38"><path fill="currentColor" fill-rule="evenodd" d="M0 0h38v38H0zM4 4v30h30V4z"></path></svg></div>';
   const hub = createHub(initial);
@@ -191,4 +192,25 @@ test('activity icons get a page-coloured silhouette underneath, removed again wh
   await waitFor(() => !fill());
   assert.equal(page.document.querySelectorAll('[data-bb-filled]').length, 0);
   assert.deepEqual(page.errors, []);
+});
+
+test('icon fill hull wraps open outlines and ignores interior points', () => {
+  // An outline with a gap on the right (like the grade icon's page) plus inner detail.
+  const points = [
+    [0, 0],
+    [38, 0],
+    [38, 10],
+    [38, 24],
+    [38, 38],
+    [0, 38],
+    [12, 12],
+    [20, 20],
+    [5, 30],
+  ];
+  assert.deepEqual(convexHull(points), [
+    [0, 0],
+    [38, 0],
+    [38, 38],
+    [0, 38],
+  ]);
 });

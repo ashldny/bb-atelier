@@ -215,6 +215,24 @@ export async function createDom(hub, { popup = false, frameId = 0, html, url } =
   window.Response = Response;
   window.AbortSignal = AbortSignal;
   window.confirm = () => true;
+  // jsdom throws if an animation frame fires after its window closed; track and cancel them.
+  const frames = new Set();
+  let closed = false;
+  const requestFrame = window.requestAnimationFrame.bind(window);
+  window.requestAnimationFrame = (callback) => {
+    if (closed) return 0;
+    const id = requestFrame((time) => {
+      frames.delete(id);
+      callback(time);
+    });
+    frames.add(id);
+    return id;
+  };
+  const cancelFrame = window.cancelAnimationFrame.bind(window);
+  window.cancelAnimationFrame = (id) => {
+    frames.delete(id);
+    cancelFrame(id);
+  };
   const code = await bundle(popup ? 'src/popup/popup.js' : 'src/content-entry.js');
   window.eval(code);
   window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
@@ -229,7 +247,10 @@ export async function createDom(hub, { popup = false, frameId = 0, html, url } =
     document: window.document,
     errors,
     close: () => {
+      closed = true;
       window.chrome.dispose();
+      for (const id of frames) cancelFrame(id);
+      frames.clear();
       window.close();
     },
   };
