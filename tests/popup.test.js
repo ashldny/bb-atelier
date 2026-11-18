@@ -181,7 +181,8 @@ test('custom domain permission is requested once and declined requests never per
   assert.match(page.$('customDomainStatus').textContent, /Connected/);
 });
 
-test('covers refresh after navigation; the crop frame keeps zero coordinates and saves once per key', async (t) => {
+test('covers refresh after navigation; the crop frame stays inside the image and saves once per key', async (t) => {
+  // Saved hanging off the bottom-left corner; the editor pulls it back inside the image.
   const crop = { x: 0, y: 100, scale: 40, rotate: 0, aspect: 1.5 };
   const page = await setup(t, defaults, {
     courseCovers: { CMPS360: { imageUrl: imageData, crop } },
@@ -196,20 +197,28 @@ test('covers refresh after navigation; the crop frame keeps zero coordinates and
   await waitFor(() => page.$('courseSelect').options.length === 2);
   assert.equal(page.$('courseSelect').disabled, false);
   change(page.window, page.$('courseSelect'), 'CMPS360');
-  assert.equal(page.$('cropBox').style.left, '0%');
-  assert.equal(page.$('cropBox').style.top, '100%');
+  // 40% wide frame of the default 2.6 banner shape on a 1.5 image: centre at 20% / 88.46%.
+  assert.equal(page.$('cropBox').style.left, '20%');
+  assert.equal(page.$('cropBox').style.top, '88.46%');
+  const key = (name) =>
+    page
+      .$('cropBox')
+      .dispatchEvent(new page.window.KeyboardEvent('keydown', { key: name, bubbles: true }));
   const before = page.hub.calls.writes.length;
-  page
-    .$('cropBox')
-    .dispatchEvent(new page.window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-  await waitFor(() => page.hub.values.local.courseCovers.CMPS360.crop?.x === 1);
-  assert.equal(page.hub.values.local.courseCovers.CMPS360.crop.y, 100);
+  key('ArrowRight');
+  await waitFor(() => page.hub.values.local.courseCovers.CMPS360.crop?.x === 21);
+  assert.equal(page.hub.values.local.courseCovers.CMPS360.crop.y, 88.46);
   assert.equal(page.hub.calls.writes.length, before + 1);
   await waitFor(() =>
     page.content.document
       .getElementById('bb-cover-position-CMPS360')
-      ?.textContent.includes('translate(-1%,-100%)')
+      ?.textContent.includes('translate(-21%,-88.46%)')
   );
+  // Pushing past the edge stops at the edge.
+  key('ArrowLeft');
+  key('ArrowLeft');
+  key('ArrowLeft');
+  await waitFor(() => page.hub.values.local.courseCovers.CMPS360.crop?.x === 20);
   change(page.window, page.$('courseSelect'), '');
   assert.equal(page.$('coverEditor').disabled, true);
   assert.deepEqual(page.errors, []);

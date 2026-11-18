@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { domainToPattern, isSupportedUrl } from '../src/utils/domains.js';
-import { parsePosition } from '../src/utils/covers.js';
+import { parsePosition, fitCropToImage } from '../src/utils/covers.js';
 import { contrastRatio, contrastText } from '../src/theme/colorUtils.js';
 import { validateSettingsImport, validateSavedTheme } from '../src/utils/importValidation.js';
 import { isValidFont, sanitizeUrl, cssUrl } from '../src/utils/sanitization.js';
@@ -104,4 +104,45 @@ test('palette tokens honor explicit text and black sidebars in both modes', () =
     assert.ok(contrastRatio(tokens['--palette-primary-main'], '#1a1a1a') >= 7);
     assert.ok(contrastRatio(tokens['--palette-text-secondary'], '#1a1a1a') >= 4.5);
   }
+});
+
+test('crop frames always stay inside the image at any position, size and angle', () => {
+  const corners = ({ x, y, scale, rotate, aspect }, banner) => {
+    const height = 1 / aspect;
+    const cx = x / 100;
+    const cy = (y / 100) * height;
+    const w = scale / 100;
+    const h = w / banner;
+    const a = (rotate * Math.PI) / 180;
+    return [
+      [-1, -1],
+      [1, -1],
+      [1, 1],
+      [-1, 1],
+    ].map(([sx, sy]) => [
+      cx + ((sx * w) / 2) * Math.cos(a) - ((sy * h) / 2) * Math.sin(a),
+      cy + ((sx * w) / 2) * Math.sin(a) + ((sy * h) / 2) * Math.cos(a),
+      height,
+    ]);
+  };
+  let seed = 7;
+  const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 2000; i++) {
+    const banner = 1.5 + random() * 3;
+    const crop = {
+      x: random() * 140 - 20,
+      y: random() * 140 - 20,
+      scale: 5 + random() * 95,
+      rotate: random() * 360 - 180,
+      aspect: 0.5 + random() * 2.5,
+    };
+    const fitted = fitCropToImage(crop, banner);
+    for (const [px, py, height] of corners(fitted, banner)) {
+      assert.ok(px >= -0.002 && px <= 1.002, `x out of image: ${JSON.stringify(crop)}`);
+      assert.ok(py >= -0.002 && py <= height + 0.002, `y out of image: ${JSON.stringify(crop)}`);
+    }
+  }
+  // A frame that already fits is left alone.
+  const inside = { x: 50, y: 50, scale: 30, rotate: 0, aspect: 1.5 };
+  assert.deepEqual(fitCropToImage(inside, 2.6), inside);
 });

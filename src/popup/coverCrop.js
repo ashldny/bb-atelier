@@ -1,7 +1,7 @@
 // Crop editor: the whole image is shown and a frame shaped like the course banner sits on
 // top. Drag the frame to move it, the corner handle to resize, the top knob to rotate.
 // Crop values are percent of the image (see normalizeCrop in utils/covers.js).
-import { normalizeCrop } from '../utils/covers.js';
+import { normalizeCrop, fitCropToImage } from '../utils/covers.js';
 
 export const DEFAULT_BANNER_ASPECT = 2.6;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -35,7 +35,10 @@ export function initCoverCrop({ getEntry, getBannerAspect, onPreview, onSave }) 
   function current() {
     const aspect = imageAspect();
     const saved = normalizeCrop(getEntry().crop);
-    return saved ? { ...saved, aspect } : defaultCrop(aspect, getBannerAspect());
+    // Frames saved before containment existed may hang off the image; pull them in.
+    return saved
+      ? fitCropToImage({ ...saved, aspect }, getBannerAspect())
+      : defaultCrop(aspect, getBannerAspect());
   }
 
   // Size the stage to the image's on-screen box, then place the frame inside it.
@@ -58,8 +61,11 @@ export function initCoverCrop({ getEntry, getBannerAspect, onPreview, onSave }) 
     readout.textContent = `Size ${Math.round(crop.scale)}% · Rotation ${Math.round(crop.rotate)}°`;
   }
 
+  // During a drag, start from the values at pointer-down: rotating shrinks the frame only
+  // as far as the current angle needs, and it grows back when rotated back.
   function set(next, save = false) {
-    crop = normalizeCrop({ ...crop, ...next });
+    const base = drag ? { ...drag.start, rotate: crop.rotate } : crop;
+    crop = fitCropToImage(normalizeCrop({ ...base, ...next }), getBannerAspect());
     layout();
     if (save) onSave(crop);
     else onPreview(crop);

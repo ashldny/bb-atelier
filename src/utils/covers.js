@@ -30,6 +30,33 @@ export function normalizeCrop(crop) {
   };
 }
 
+/**
+ * Keep a crop frame (banner-shaped, possibly rotated) entirely inside the image, so the
+ * cover never shows empty space. A rotated rectangle fits an axis-aligned image exactly
+ * when its bounding box does: first cap the width for this angle, then clamp the centre.
+ * @param {{x:number,y:number,scale:number,rotate:number,aspect:number}} crop
+ * @param {number} bannerAspect banner width / height
+ */
+export function fitCropToImage(crop, bannerAspect) {
+  const height = 1 / crop.aspect; // image height in image-width units
+  const angle = (crop.rotate * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(angle));
+  const sin = Math.abs(Math.sin(angle));
+  const maxWidth = Math.min(1 / (cos + sin / bannerAspect), height / (sin + cos / bannerAspect));
+  const width = Math.min(crop.scale / 100, maxWidth);
+  const halfX = (width / 2) * (cos + sin / bannerAspect);
+  const halfY = (width / 2) * (sin + cos / bannerAspect);
+  const x = clamp(crop.x / 100, halfX, 1 - halfX, 0.5);
+  const y = clamp((crop.y / 100) * height, halfY, height - halfY, height / 2);
+  return {
+    ...crop,
+    // Round inward so rounding can never push an edge past the image.
+    scale: Math.floor(width * 10000 + 1e-6) / 100,
+    x: round(x * 100),
+    y: round((y / height) * 100),
+  };
+}
+
 export function normalizeCoverEntry(entry) {
   const source = typeof entry === 'string' ? { imageUrl: entry } : entry || {};
   const { x, y } = parsePosition(source.position);
