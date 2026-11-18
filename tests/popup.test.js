@@ -103,6 +103,29 @@ test('saved themes preserve custom text/font; names render as text; loading a de
   assert.deepEqual(page.errors, []);
 });
 
+test('saving a repeated name adds a numbered copy; delete asks in an in-popup dialog', async (t) => {
+  const page = await setup(t, defaults, { savedThemes: { Daily: defaults } });
+  page.document.querySelector('.tab-btn[data-tab="saved"]').click();
+  page.$('saveCurrentBtn').click();
+  page.$('saveThemeName').value = 'Daily';
+  page
+    .$('saveThemeForm')
+    .dispatchEvent(new page.window.Event('submit', { bubbles: true, cancelable: true }));
+  await waitFor(() => page.hub.values.local.savedThemes['Daily (1)']);
+  assert.ok(page.hub.values.local.savedThemes.Daily);
+  await waitFor(() => page.$('savedList').querySelector('[data-name="Daily (1)"]'));
+  page.$('savedList').querySelector('[data-name="Daily (1)"] .delete-saved').click();
+  await waitFor(() => !page.$('confirmDialog').hidden);
+  page.$('confirmCancel').click();
+  assert.ok(page.hub.values.local.savedThemes['Daily (1)']);
+  page.$('savedList').querySelector('[data-name="Daily (1)"] .delete-saved').click();
+  await waitFor(() => !page.$('confirmDialog').hidden);
+  page.$('confirmOk').click();
+  await waitFor(() => !page.hub.values.local.savedThemes['Daily (1)']);
+  assert.ok(page.hub.values.local.savedThemes.Daily);
+  assert.deepEqual(page.errors, []);
+});
+
 test('legacy collections migrate without losing saved uploaded fonts or covers', async (t) => {
   const font = 'data:font/woff2;base64,AAAA';
   const page = await setup(

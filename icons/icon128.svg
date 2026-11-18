@@ -1,4 +1,13 @@
-﻿<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'>
-  <rect width='128' height='128' rx='20' fill='%236366f1'/>
-  <text x='64' y='90' text-anchor='middle' font-size='72' font-family='Arial' fill='white' font-weight='bold'>B</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Bb Atelier mark: monoline b, needle-eye slot in the stem. Raspberry #CC3A64, transparent. -->
+  <defs>
+    <mask id="eye" maskUnits="userSpaceOnUse" x="0" y="0" width="128" height="128">
+      <rect width="128" height="128" fill="#fff"/>
+      <rect x="38" y="26" width="4" height="13" rx="2" fill="#000"/>
+    </mask>
+  </defs>
+  <g transform="translate(64 64) scale(1.3) translate(-64 -63)" mask="url(#eye)" fill="none" stroke="#CC3A64" stroke-width="11">
+    <line x1="40" y1="24" x2="40" y2="102" stroke-linecap="round"/>
+    <circle cx="66" cy="80" r="22"/>
+  </g>
 </svg>

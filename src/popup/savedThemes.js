@@ -8,6 +8,7 @@ import { showToast, debounce } from '../utils/ui.js';
 import { updateStored } from '../utils/storage.js';
 import { validateSavedTheme, validateThemeCollection } from '../utils/importValidation.js';
 import { downloadJson } from '../utils/files.js';
+import { confirmDialog } from './dialog.js';
 
 const preview = debounce((theme) => {
   const { overrides, darkOverrides, staticVars } = derivePalette(
@@ -18,6 +19,13 @@ const preview = debounce((theme) => {
   );
   previewThemeOnBb(overrides, darkOverrides, staticVars);
 }, 150);
+
+export function uniqueName(name, existing) {
+  if (!Object.hasOwn(existing, name)) return name;
+  let index = 1;
+  while (Object.hasOwn(existing, `${name} (${index})`)) index++;
+  return `${name} (${index})`;
+}
 
 export function initSaved() {
   const form = document.getElementById('saveThemeForm');
@@ -38,12 +46,14 @@ export function initSaved() {
     if (!name) return nameInput.focus();
     try {
       const local = await chrome.storage.local.get('font');
-      await updateStored('local', 'savedThemes', (current) => ({
-        ...current,
-        [name]: { ...readPalette(), font: local.font || null },
-      }));
+      let savedAs = name;
+      await updateStored('local', 'savedThemes', (current = {}) => {
+        // Never overwrite: a repeated name is stored as "Name (1)", "Name (2)", …
+        savedAs = uniqueName(name, current);
+        return { ...current, [savedAs]: { ...readPalette(), font: local.font || null } };
+      });
       form.hidden = true;
-      showToast(`Saved “${name}”`);
+      showToast(`Saved “${savedAs}”`);
     } catch {
       showToast('Could not save this theme. Try again.', 'error');
     }
@@ -95,6 +105,9 @@ export async function renderSaved() {
   const entries = Object.entries(savedThemes)
     .map(([name, value]) => [name, validateSavedTheme(value)])
     .filter(([, theme]) => theme);
+  document.getElementById('savedCount').textContent = entries.length
+    ? `${entries.length} saved ${entries.length === 1 ? 'theme' : 'themes'}`
+    : '';
   if (!entries.length) {
     list.innerHTML =
       '<div class="saved-empty"><strong>Keep a look you love.</strong><p>Choose your colors, then save the current theme here.</p></div>';
@@ -142,9 +155,13 @@ export async function renderSaved() {
       restoreThemeOnBb();
     });
     row.querySelector('.delete-saved').addEventListener('click', async () => {
-      if (!confirm(`Delete “${name}”?`)) return;
       preview.cancel();
       restoreThemeOnBb();
+      const confirmed = await confirmDialog({
+        title: 'Delete this theme?',
+        message: `“${name}” will be removed from your saved themes. This can’t be undone.`,
+      });
+      if (!confirmed) return;
       await updateStored('local', 'savedThemes', (current) => {
         const next = { ...current };
         delete next[name];

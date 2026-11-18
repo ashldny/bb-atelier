@@ -16,6 +16,11 @@ export function initTabGroup(buttonSelector, panelSelector, attribute, initial) 
       panel.hidden = !selected;
       panel.setAttribute('aria-labelledby', `nav-${panel.dataset[attribute]}`);
     });
+    // Slide the group's indicator (line or pill) under the active tab. Index-based CSS
+    // math keeps it correct even while the group sits in a hidden panel.
+    const nav = button.parentElement;
+    nav.style.setProperty('--tab-count', String(buttons.length));
+    nav.style.setProperty('--tab-index', String(buttons.indexOf(button)));
     if (focus) button.focus();
     document.dispatchEvent(
       new CustomEvent('bb-tab-change', {

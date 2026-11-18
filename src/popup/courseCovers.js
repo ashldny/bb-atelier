@@ -6,6 +6,7 @@ import { updateStored } from '../utils/storage.js';
 import { showToast, debounce } from '../utils/ui.js';
 import { initCoverLibrary, readImage, addToLibrary } from './coverLibrary.js';
 import { initCoverPosition, updateFocalUI } from './coverPosition.js';
+import { syncSelect } from './customSelect.js';
 
 export async function initCourseCovers() {
   let covers = (await chrome.storage.local.get('courseCovers')).courseCovers || {};
@@ -67,7 +68,9 @@ export async function initCourseCovers() {
     const courses = await sendToTab({ action: 'getCourses' }, { quiet: true });
     if (token !== request) return;
     button.disabled = false;
-    select.replaceChildren(new Option('Select a course…', ''));
+    const placeholder = new Option('Select a course…', '');
+    placeholder.dataset.placeholder = '';
+    select.replaceChildren(placeholder);
     if (Array.isArray(courses))
       for (const course of courses) {
         if (typeof course.id === 'string' && typeof course.name === 'string')
@@ -76,6 +79,7 @@ export async function initCourseCovers() {
     empty.hidden = !!courses?.length;
     if ([...select.options].some((option) => option.value === currentId)) select.value = currentId;
     else currentId = '';
+    syncSelect(select);
     render();
   }
   document.getElementById('refreshCoursesBtn').addEventListener('click', refreshCourses);

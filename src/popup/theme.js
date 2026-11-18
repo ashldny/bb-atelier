@@ -121,6 +121,8 @@ export function initTheme(sync, local) {
   setPaletteInputs(sync);
   initFonts(local);
   initTabGroup('.sub-tab-btn', '.sub-content', 'subtab');
+  // Open the preset list that contains the current theme.
+  initTabGroup('.mode-btn', '.mode-panel', 'mode', isDark(palette.pageBg) ? 'dark' : 'light');
   const toggle = document.getElementById('masterToggle');
   const controls = document.getElementById('customizationControls');
   function masterState(enabled) {

@@ -9,7 +9,9 @@
   <body aria-busy="true">
     <header class="header">
       <div>
-        <h1>Bb Atelier</h1>
+        <h1>
+          <img class="brand-mark" src="icons/icon128.svg" alt="" width="22" height="22" />Bb Atelier
+        </h1>
         <p class="subtitle">Make Blackboard feel like you.</p>
       </div>
       <label class="master-toggle">
@@ -59,6 +61,7 @@
       >
         Settings
       </button>
+      <span class="tab-indicator" aria-hidden="true"></span>
     </nav>
     <p id="pausedNotice" class="notice" hidden>
       Customization is paused. Your saved choices are safe.
@@ -68,9 +71,9 @@
       <section class="tab-content active" data-tab="theme" id="tab-theme" role="tabpanel">
         <fieldset id="customizationControls" disabled>
           <legend class="sr-only">Theme customization</legend>
-          <div class="sub-nav" role="tablist" aria-label="Theme sections">
+          <div class="seg-nav" role="tablist" aria-label="Theme sections">
             <button
-              class="sub-tab-btn active"
+              class="seg-btn sub-tab-btn active"
               data-subtab="presets"
               role="tab"
               aria-selected="true"
@@ -79,7 +82,7 @@
               Presets
             </button>
             <button
-              class="sub-tab-btn"
+              class="seg-btn sub-tab-btn"
               data-subtab="colors"
               role="tab"
               aria-selected="false"
@@ -89,7 +92,7 @@
               Colors
             </button>
             <button
-              class="sub-tab-btn"
+              class="seg-btn sub-tab-btn"
               data-subtab="font"
               role="tab"
               aria-selected="false"
@@ -98,6 +101,7 @@
             >
               Typography
             </button>
+            <span class="tab-indicator" aria-hidden="true"></span>
           </div>
           <section
             class="sub-content active"
@@ -105,22 +109,36 @@
             id="sub-presets"
             role="tabpanel"
           >
-            <div class="section-heading"><h2>Find your everyday look</h2></div>
-            <p class="hint">Hover to preview. Select to keep.</p>
-            <div class="presets-columns">
-              <div>
-                <h3 class="presets-col-label">Light</h3>
-                <div id="presetGridLight" class="preset-grid-col"></div>
-              </div>
-              <div>
-                <h3 class="presets-col-label">Dark</h3>
-                <div id="presetGridDark" class="preset-grid-col"></div>
-              </div>
+            <div class="seg-nav seg-nav-small" role="tablist" aria-label="Preset brightness">
+              <button
+                class="seg-btn mode-btn active"
+                data-mode="light"
+                role="tab"
+                aria-selected="true"
+                aria-controls="mode-light"
+              >
+                Light
+              </button>
+              <button
+                class="seg-btn mode-btn"
+                data-mode="dark"
+                role="tab"
+                aria-selected="false"
+                aria-controls="mode-dark"
+                tabindex="-1"
+              >
+                Dark
+              </button>
+              <span class="tab-indicator" aria-hidden="true"></span>
+            </div>
+            <div class="mode-panel" data-mode="light" id="mode-light" role="tabpanel">
+              <div id="presetGridLight" class="preset-grid-col"></div>
+            </div>
+            <div class="mode-panel" data-mode="dark" id="mode-dark" role="tabpanel" hidden>
+              <div id="presetGridDark" class="preset-grid-col"></div>
             </div>
           </section>
           <section class="sub-content" data-subtab="colors" id="sub-colors" role="tabpanel" hidden>
-            <h2>A palette of your own</h2>
-            <p class="hint">Changes save and apply as you go.</p>
             <div class="colors-grid">
               <label class="color-swatch"
                 ><span>Background</span
@@ -163,33 +181,49 @@
                 >Choose readable text automatically</span
               ></label
             >
-            <p id="contrastSummary" class="contrast-summary" role="status"></p>
+            <div class="contrast-card" id="contrastCard">
+              <span class="contrast-sample" id="contrastSample" aria-hidden="true">Aa</span>
+              <div class="contrast-body">
+                <span class="contrast-ratio" id="contrastRatio"></span>
+                <p id="contrastSummary" class="contrast-summary" role="status"></p>
+              </div>
+            </div>
           </section>
           <section class="sub-content" data-subtab="font" id="sub-font" role="tabpanel" hidden>
-            <h2>A little easier to read</h2>
-            <p class="hint">Pick a typeface for your Blackboard pages.</p>
-            <label class="field-label" for="fontSelect">Typeface</label>
-            <select id="fontSelect">
-              <option value="">Blackboard default</option>
-              <optgroup label="Sans serif">
-                <option value="Inter">Inter</option>
-                <option value="system-ui">System UI</option>
-                <option value="Segoe UI">Segoe UI</option>
-                <option value="Roboto">Roboto</option>
-              </optgroup>
-              <optgroup label="Serif">
-                <option value="Noto Serif">Noto Serif</option>
-                <option value="serif">Generic serif</option>
-              </optgroup>
-              <optgroup label="Monospace"><option value="monospace">Monospace</option></optgroup>
-              <optgroup id="fontUploadGroup" label="Your upload" hidden></optgroup>
-            </select>
-            <div class="font-preview" id="fontPreview"><span>Aa</span> A fresh perspective.</div>
-            <div class="button-row">
-              <button class="btn secondary" id="fontUploadBtn">Upload font</button
-              ><button class="btn quiet" id="resetFontBtn">Reset</button>
+            <div class="panel">
+              <div class="panel-heading">
+                <label class="panel-title" for="fontSelect">Typeface</label>
+                <button class="btn tiny" id="resetFontBtn" type="button">Reset</button>
+              </div>
+              <select id="fontSelect">
+                <option value="">Blackboard default</option>
+                <optgroup label="Sans serif">
+                  <option value="Inter">Inter</option>
+                  <option value="system-ui">System UI</option>
+                  <option value="Segoe UI">Segoe UI</option>
+                  <option value="Roboto">Roboto</option>
+                </optgroup>
+                <optgroup label="Serif">
+                  <option value="Noto Serif">Noto Serif</option>
+                  <option value="serif">Generic serif</option>
+                </optgroup>
+                <optgroup label="Monospace"><option value="monospace">Monospace</option></optgroup>
+                <optgroup id="fontUploadGroup" label="Custom font" data-menu-skip hidden></optgroup>
+              </select>
+              <div class="font-preview" id="fontPreview">
+                <span>Aa</span> The quick brown fox jumps over the lazy dog.
+              </div>
             </div>
-            <p class="hint">TTF, OTF, WOFF or WOFF2 · up to 512 KB</p>
+            <div class="panel">
+              <div class="panel-heading">
+                <span class="panel-title">Custom font</span>
+              </div>
+              <div class="custom-font-row">
+                <span class="custom-font-name" id="customFontName">No custom font yet</span>
+                <button class="btn secondary" id="fontUploadBtn" type="button">Upload font</button>
+              </div>
+              <p class="fine-print">TTF, OTF, WOFF or WOFF2 · up to 512 KB</p>
+            </div>
             <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" hidden />
           </section>
         </fieldset>
@@ -197,7 +231,7 @@
 
       <section class="tab-content" data-tab="saved" id="tab-saved" role="tabpanel" hidden>
         <div class="section-heading">
-          <h2>Your saved looks</h2>
+          <span class="list-count" id="savedCount"></span>
           <button class="btn primary" id="saveCurrentBtn">Save current</button>
         </div>
         <form id="saveThemeForm" class="inline-form" hidden>
@@ -215,7 +249,7 @@
           </div>
         </form>
         <div id="savedList"></div>
-        <div class="button-row transfer-actions">
+        <div class="button-row centered transfer-actions">
           <button class="btn secondary" id="exportThemesBtn">Export themes</button
           ><button class="btn quiet" id="importThemesBtn">Import themes</button>
         </div>
@@ -223,14 +257,23 @@
       </section>
 
       <section class="tab-content" data-tab="covers" id="tab-covers" role="tabpanel" hidden>
-        <div class="section-heading">
-          <h2>Course covers</h2>
-          <button class="btn quiet" id="refreshCoursesBtn">Refresh list</button>
+        <label class="panel-title" for="courseSelect">Course</label>
+        <div class="select-row">
+          <select id="courseSelect">
+            <option value="" data-placeholder>Select a course…</option>
+          </select>
+          <button
+            class="icon-btn"
+            id="refreshCoursesBtn"
+            type="button"
+            aria-label="Refresh course list"
+            title="Refresh course list"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" />
+            </svg>
+          </button>
         </div>
-        <label class="field-label" for="courseSelect">Course</label>
-        <select id="courseSelect">
-          <option value="">Select a course…</option>
-        </select>
         <p id="coursesEmpty" class="hint" hidden>
           Open the Courses page in Blackboard, then refresh this list.
         </p>
@@ -253,7 +296,7 @@
             <span>Position <span id="coverPositionText">50% / 50%</span></span
             ><button class="btn quiet" id="resetPositionBtn">Center</button>
           </div>
-          <div class="button-row">
+          <div class="button-row centered">
             <button class="btn secondary" id="uploadCoverBtn">Upload image</button
             ><button class="btn quiet" id="coverUrlBtn">Use a URL</button
             ><button class="btn quiet danger" id="removeCoverBtn">Remove</button>
@@ -372,6 +415,22 @@
         </section>
       </section>
     </main>
+    <div class="modal-backdrop" id="confirmDialog" hidden>
+      <div
+        class="modal"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="confirmTitle"
+        aria-describedby="confirmMessage"
+      >
+        <h2 id="confirmTitle"></h2>
+        <p id="confirmMessage"></p>
+        <div class="modal-actions">
+          <button class="btn quiet" id="confirmCancel" type="button">Cancel</button
+          ><button class="btn primary" id="confirmOk" type="button">Delete</button>
+        </div>
+      </div>
+    </div>
     <footer>
       <p id="connectionStatus" role="status" data-state="idle">Connecting to Blackboard…</p>
     </footer>

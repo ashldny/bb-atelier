@@ -4,6 +4,7 @@ import { initSaved } from './savedThemes.js';
 import { initCourseCovers } from './courseCovers.js';
 import { initSettingsTab } from './settingsTab.js';
 import { initCoverageAudit } from './coverageAudit.js';
+import { initCustomSelects } from './customSelect.js';
 import { DEFAULT_SETTINGS } from '../utils/constants.js';
 import { setToastPreference, showToast } from '../utils/ui.js';
 import { getTargetTab, sendToTab } from '../messaging/themeMessaging.js';
@@ -34,6 +35,7 @@ async function boot() {
     ]);
     const sync = { ...DEFAULT_SETTINGS, ...stored };
     setToastPreference(sync.bbTheme?.showToast !== false);
+    initCustomSelects();
     initTheme(sync, local);
     initSaved();
     initSettingsTab(sync);

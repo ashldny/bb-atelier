@@ -1,5 +1,6 @@
 import { showToast } from '../utils/ui.js';
 import { isValidFont, MAX_FONT_SIZE, validateFileSize, cssUrl } from '../utils/sanitization.js';
+import { syncSelect } from './customSelect.js';
 
 export function updateFontPreviewLive(font = '') {
   const preview = document.getElementById('fontPreview');
@@ -17,13 +18,21 @@ export function updateFontPreviewLive(font = '') {
 export function restoreFontControl(local = {}) {
   const select = document.getElementById('fontSelect');
   const group = document.getElementById('fontUploadGroup');
+  const customName = document.getElementById('customFontName');
   group.replaceChildren();
-  if (local.font?.startsWith('data:') && isValidFont(local.font)) {
-    const option = new Option(local.fontName || 'Uploaded font', local.font);
-    group.appendChild(option);
+  const custom = local.font?.startsWith('data:') && isValidFont(local.font);
+  if (custom) {
+    const name = local.fontName || 'Uploaded font';
+    group.appendChild(new Option(`Custom · ${name}`, local.font));
     group.hidden = false;
-  } else group.hidden = true;
+    customName.textContent = name;
+  } else {
+    group.hidden = true;
+    customName.textContent = 'No custom font yet';
+  }
+  customName.classList.toggle('active', custom);
   select.value = local.font || '';
+  syncSelect(select);
   updateFontPreviewLive(local.font);
 }
 
@@ -36,6 +45,9 @@ export function initFonts(local) {
       if (!isValidFont(font)) throw new Error('Invalid font');
       await chrome.storage.local.set({ font, fontName: font });
       updateFontPreviewLive(font);
+      document
+        .getElementById('customFontName')
+        .classList.toggle('active', font.startsWith('data:'));
       document.dispatchEvent(new Event('bb-status-change'));
     } catch {
       showToast('Could not save the font. Try again.', 'error');
