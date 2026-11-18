@@ -47,7 +47,7 @@ Popup ↔ Content script must stay in sync. After changing any `src/messaging/*.
 Current canonical messages (popup → content):
 - `applyThemeCSS { css }` / `previewThemeCSS { css }` / `restoreTheme` / `resetTheme`
 - `applyFont { font }`
-- `applyCover { courseId, imageUrl, position }` / `removeCover { courseId }`
+- `applyCover { courseId, imageUrl?, position?, crop? }` / `removeCover { courseId }` — `crop = { x, y, scale, rotate, aspect }` (percent of image; see `utils/covers.js`)
 - `enableAll` / `disableAll`
 - `auditTheme` → `{ checked, issues[{ path, prop, color, source, count }] }` (Settings → Theme coverage)
 
@@ -77,11 +77,11 @@ npm run lint           # eslint + web-ext lint — zero errors
 manifest.json              # MV3 manifest (permissions, host_permissions, CSP)
 popup.html / style.css     # Popup shell (420px, 3 tabs)
 src/content-entry.js       # Content script source (dual-engine stub)
-src/popup/{popup,tabs,theme,savedThemes,courseCovers,settings}.js
+src/popup/{popup,tabs,theme,savedThemes,courseCovers,coverCrop,customSelect,dialog,fonts,settings}.js
 src/theme/{presets,palette,cssBuilder,colorUtils,colorRemap}.js
-src/content/{styles,theme,ruleRemapper,covers,fonts}.js
+src/content/{styles,theme,ruleRemapper,covers,fonts,streamIcons}.js
 src/messaging/themeMessaging.js
-src/utils/{constants,sanitization,ui}.js
+src/utils/{constants,sanitization,ui,covers,fontCatalog}.js
 Fonts/ / icons/            # Static assets (do not edit without design review)
 ```
 

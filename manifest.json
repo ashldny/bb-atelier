@@ -46,7 +46,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["Fonts/Inter/*.woff2", "Fonts/NotoSerif/*.woff2"],
+      "resources": ["Fonts/*/*.woff2"],
       "matches": ["<all_urls>"]
     }
   ]

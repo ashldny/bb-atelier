@@ -1,64 +1,69 @@
 import { normalizeCoverEntry } from '../utils/covers.js';
-import { DEFAULT_POSITION } from '../utils/constants.js';
 import { sanitizeUrl } from '../utils/sanitization.js';
 import { sendToTab } from '../messaging/themeMessaging.js';
 import { updateStored } from '../utils/storage.js';
 import { showToast, debounce } from '../utils/ui.js';
 import { initCoverLibrary, readImage, addToLibrary } from './coverLibrary.js';
-import { initCoverPosition, updateFocalUI } from './coverPosition.js';
+import { initCoverCrop, DEFAULT_BANNER_ASPECT } from './coverCrop.js';
 import { syncSelect } from './customSelect.js';
 
 export async function initCourseCovers() {
   let covers = (await chrome.storage.local.get('courseCovers')).courseCovers || {};
   let currentId = '';
   let request = 0;
+  const bannerAspects = new Map();
   const select = document.getElementById('courseSelect');
   const image = document.getElementById('coverImage');
   const getEntry = () => normalizeCoverEntry(covers[currentId]);
   const controls = document.getElementById('coverEditor');
   const empty = document.getElementById('coursesEmpty');
 
-  function render() {
-    const entry = getEntry();
-    image.hidden = !entry.imageUrl;
-    controls.disabled = !currentId;
-    document.getElementById('courseCoverPreview').classList.toggle('has-image', !!entry.imageUrl);
-    if (entry.imageUrl) image.src = entry.imageUrl;
-    else image.removeAttribute('src');
-    document.getElementById('coverHint').hidden = !entry.imageUrl;
-    document.getElementById('coverPositionControls').hidden = !entry.imageUrl;
-    document.getElementById('removeCoverBtn').disabled = !entry.imageUrl;
-    updateFocalUI(entry.position);
-  }
-
-  async function saveCover(imageUrl, position = DEFAULT_POSITION) {
+  async function saveCover(imageUrl, crop = null, { quiet = false } = {}) {
     const id = currentId;
     if (!id) return;
     try {
       await updateStored('local', 'courseCovers', (current) => ({
         ...current,
-        [id]: normalizeCoverEntry({ imageUrl, position }),
+        [id]: normalizeCoverEntry({ imageUrl, crop }),
       }));
       document.dispatchEvent(new Event('bb-status-change'));
-      showToast('Cover saved');
+      if (!quiet) showToast('Cover saved');
     } catch {
       showToast('Could not save the cover. Try again.', 'error');
     }
   }
 
-  const previewPosition = debounce((position) => {
+  const previewCrop = debounce((crop) => {
     if (!currentId) return;
-    sendToTab({ action: 'applyCover', courseId: currentId, position }, { quiet: true });
+    sendToTab({ action: 'applyCover', courseId: currentId, crop }, { quiet: true });
   }, 60);
-  initCoverPosition(getEntry, previewPosition, async (position) => {
-    previewPosition.cancel();
-    const entry = getEntry();
-    if (!currentId || !entry.imageUrl) return;
-    // Update memory immediately so quick keyboard presses accumulate correctly.
-    covers[currentId] = { ...entry, position };
-    updateFocalUI(position);
-    await saveCover(entry.imageUrl, position);
+  const cropper = initCoverCrop({
+    getEntry,
+    getBannerAspect: () => bannerAspects.get(currentId) || DEFAULT_BANNER_ASPECT,
+    onPreview: previewCrop,
+    onSave: async (crop) => {
+      previewCrop.cancel();
+      const entry = getEntry();
+      if (!currentId || !entry.imageUrl) return;
+      // Update memory immediately so quick keyboard presses accumulate correctly.
+      covers = { ...covers, [currentId]: { ...entry, crop } };
+      await saveCover(entry.imageUrl, crop, { quiet: true });
+    },
   });
+
+  function render() {
+    const entry = getEntry();
+    controls.disabled = !currentId;
+    document.getElementById('cropStage').hidden = !entry.imageUrl;
+    document.getElementById('courseCoverPreview').classList.toggle('has-image', !!entry.imageUrl);
+    if (entry.imageUrl) {
+      if (image.getAttribute('src') !== entry.imageUrl) image.src = entry.imageUrl;
+    } else image.removeAttribute('src');
+    document.getElementById('coverPositionControls').hidden = !entry.imageUrl;
+    document.getElementById('removeCoverBtn').disabled = !entry.imageUrl;
+    cropper.render();
+  }
+
   initCoverLibrary(() => currentId, saveCover);
 
   async function refreshCourses() {
@@ -71,12 +76,19 @@ export async function initCourseCovers() {
     const placeholder = new Option('Select a course…', '');
     placeholder.dataset.placeholder = '';
     select.replaceChildren(placeholder);
+    bannerAspects.clear();
     if (Array.isArray(courses))
       for (const course of courses) {
-        if (typeof course.id === 'string' && typeof course.name === 'string')
-          select.add(new Option(course.name, course.id));
+        if (typeof course.id !== 'string' || typeof course.name !== 'string') continue;
+        select.add(new Option(course.name, course.id));
+        const aspect = Number(course.aspect);
+        if (aspect >= 1 && aspect <= 8) bannerAspects.set(course.id, aspect);
       }
-    empty.hidden = !!courses?.length;
+    // Courses can only be read from Blackboard's course list, so lock the menu elsewhere.
+    const found = select.options.length > 1;
+    empty.hidden = found;
+    select.disabled = !found;
+    placeholder.textContent = found ? 'Select a course…' : 'Open your Courses page first';
     if ([...select.options].some((option) => option.value === currentId)) select.value = currentId;
     else currentId = '';
     syncSelect(select);
@@ -87,7 +99,7 @@ export async function initCourseCovers() {
     if (event.detail.group === 'tab' && event.detail.value === 'covers') refreshCourses();
   });
   select.addEventListener('change', () => {
-    previewPosition.cancel();
+    previewCrop.cancel();
     currentId = select.value;
     render();
   });
@@ -109,7 +121,7 @@ export async function initCourseCovers() {
   });
   document.getElementById('removeCoverBtn').addEventListener('click', async () => {
     const id = currentId;
-    previewPosition.cancel();
+    previewCrop.cancel();
     try {
       await updateStored('local', 'courseCovers', (current) => {
         const next = { ...current };

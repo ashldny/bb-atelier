@@ -26,9 +26,37 @@ export function scrapeCourses() {
     const name = card.querySelector(
       '.course-title, .js-course-title-element, h4, [class*="title"]'
     )?.textContent;
-    courses.set(id, { id, name: name?.trim().replace(/\s+/g, ' ').slice(0, 120) || id });
+    // Banner shape lets the popup draw a crop frame that matches this page's cards.
+    const box = card.querySelector(BANNER)?.getBoundingClientRect();
+    const aspect =
+      box?.width && box?.height ? Math.round((box.width / box.height) * 100) / 100 : null;
+    courses.set(id, {
+      id,
+      name: name?.trim().replace(/\s+/g, ' ').slice(0, 120) || id,
+      aspect,
+    });
   });
   return [...courses.values()];
+}
+
+// Cropped covers draw the whole image on ::before, scaled so the frame's width fills the
+// banner, then rotated about the banner centre: frame centre (x%, y%) lands in the middle.
+function imageRule(selector, entry) {
+  const url = cssUrl(entry.imageUrl);
+  if (!entry.crop)
+    return `${selector}{background:${url} var(--bb-cover-position,50% 50%)/cover no-repeat!important;}
+${selector} img{visibility:hidden!important;}
+${selector}::before,${selector}::after{background:none!important;}`;
+  return `${selector}{background:none!important;position:relative!important;overflow:hidden!important;}
+${selector} img{visibility:hidden!important;}
+${selector}::after{background:none!important;}
+${selector}::before{content:''!important;display:block!important;position:absolute!important;left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;width:var(--bb-crop-w,100%)!important;height:auto!important;max-width:none!important;aspect-ratio:var(--bb-crop-ar,1.5)!important;background:${url} center/100% 100% no-repeat!important;transform-origin:0 0!important;transform:var(--bb-crop-t,translate(-50%,-50%))!important;opacity:1!important;pointer-events:none!important;z-index:0!important;}`;
+}
+
+function positionRule(selector, entry) {
+  const crop = entry.crop;
+  if (!crop) return `${selector}{--bb-cover-position:${entry.position};}`;
+  return `${selector}{--bb-crop-w:${(10000 / crop.scale).toFixed(2)}%;--bb-crop-ar:${crop.aspect};--bb-crop-t:rotate(${-crop.rotate}deg) translate(${-crop.x}%,${-crop.y}%);}`;
 }
 
 export function createCoverController(styles) {
@@ -98,16 +126,14 @@ export function createCoverController(styles) {
         const styleId = `bb-cover-style-${encodeURIComponent(id)}`;
         const positionId = `bb-cover-position-${encodeURIComponent(id)}`;
         const selector = `.course-banner[data-bb-cover="${CSS.escape(id)}"]`;
-        if (appliedImages.get(styleId) !== entry.imageUrl) {
-          styles.set(
-            styleId,
-            `${selector}{background:${cssUrl(entry.imageUrl)} var(--bb-cover-position,50% 50%)/cover no-repeat!important;}
-          ${selector} img{visibility:hidden!important;}
-          ${selector}::before,${selector}::after{background:none!important;}`
-          );
-          appliedImages.set(styleId, entry.imageUrl);
+        // The heavy image rule only changes with the image or mode; drags rewrite the
+        // small position rule.
+        const key = `${entry.crop ? 'crop' : 'cover'}|${entry.imageUrl}`;
+        if (appliedImages.get(styleId) !== key) {
+          styles.set(styleId, imageRule(selector, entry));
+          appliedImages.set(styleId, key);
         }
-        styles.set(positionId, `${selector}{--bb-cover-position:${entry.position};}`);
+        styles.set(positionId, positionRule(selector, entry));
         nextIds.add(styleId);
         nextIds.add(positionId);
       }

@@ -3,6 +3,7 @@ import { createStyleHost } from './content/styles.js';
 import { createThemeController } from './content/theme.js';
 import { createCoverController, scrapeCourses } from './content/covers.js';
 import { applyFont } from './content/fonts.js';
+import { createIconFiller } from './content/streamIcons.js';
 import { auditTheme } from './content/themeAudit.js';
 import { DEFAULT_SETTINGS, PALETTE_KEYS } from './utils/constants.js';
 import { isValidFont } from './utils/sanitization.js';
@@ -15,6 +16,7 @@ function start() {
   const styles = createStyleHost();
   const theme = createThemeController(styles);
   const covers = createCoverController(styles);
+  const icons = createIconFiller();
   let sync = { ...DEFAULT_SETTINGS };
   let local = {};
   let sessionActive = true;
@@ -34,6 +36,7 @@ function start() {
       lastFont = font;
     }
     covers.update(local.courseCovers, enabled());
+    icons.update(enabled());
     applied = true;
   }
   function scheduleRender() {

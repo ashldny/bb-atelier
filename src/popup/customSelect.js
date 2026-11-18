@@ -37,6 +37,7 @@ export function enhanceSelect(select) {
   document.querySelector(`label[for="${select.id}"]`)?.setAttribute('for', trigger.id);
 
   let active = -1;
+  const keepOpen = select.hasAttribute('data-keep-open');
   const items = () => [...menu.querySelectorAll('.select-option')];
 
   function highlight(index) {
@@ -55,6 +56,9 @@ export function enhanceSelect(select) {
     item.setAttribute('role', 'option');
     item.dataset.value = option.value;
     item.textContent = option.textContent;
+    // Lets a font option preview in its own typeface.
+    if (option.style.fontFamily) item.style.fontFamily = option.style.fontFamily;
+    if (option.parentElement.tagName === 'OPTGROUP') item.classList.add('in-group');
     const selected = option.value === select.value;
     item.setAttribute('aria-selected', String(selected));
     if (selected) item.classList.add('selected');
@@ -128,8 +132,9 @@ export function enhanceSelect(select) {
     if (returnFocus) trigger.focus();
   }
 
+  // data-keep-open selects (the font list) stay open so people can try several options.
   function choose(value) {
-    close(true);
+    if (!keepOpen) close(true);
     if (value === select.value) return;
     select.value = value;
     sync();
@@ -158,7 +163,10 @@ export function enhanceSelect(select) {
       ArrowUp: () => highlight(active - 1),
       Home: () => highlight(0),
       End: () => highlight(list.length - 1),
-      Enter: () => list[active] && choose(list[active].dataset.value),
+      Enter: () => {
+        if (list[active]) choose(list[active].dataset.value);
+        if (keepOpen) close(true);
+      },
       ' ': () => list[active] && choose(list[active].dataset.value),
       Escape: () => close(true),
       Tab: () => close(),

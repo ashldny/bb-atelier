@@ -1,6 +1,7 @@
 import { showToast } from '../utils/ui.js';
 import { isValidFont, MAX_FONT_SIZE, validateFileSize, cssUrl } from '../utils/sanitization.js';
 import { syncSelect } from './customSelect.js';
+import { FONT_GROUPS, fontFiles, fontStack } from '../utils/fontCatalog.js';
 
 export function updateFontPreviewLive(font = '') {
   const preview = document.getElementById('fontPreview');
@@ -12,14 +13,40 @@ export function updateFontPreviewLive(font = '') {
     style.textContent = `@font-face{font-family:'BbPreview';src:${cssUrl(font)};font-display:swap;}`;
     document.head.appendChild(style);
     preview.style.fontFamily = 'BbPreview, sans-serif';
-  } else preview.style.fontFamily = font || 'Inter, sans-serif';
+  } else preview.style.fontFamily = font ? fontStack(font) : '';
+}
+
+// Build the typeface menu from the catalog; each option previews in its own font.
+function renderFontOptions() {
+  const faces = [];
+  const groups = FONT_GROUPS.map((group) => {
+    const element = document.createElement('optgroup');
+    element.label = group.label;
+    for (const font of group.fonts) {
+      const option = new Option(font.name, font.name);
+      option.style.fontFamily = fontStack(font.name);
+      element.appendChild(option);
+      for (const { path, weight } of fontFiles(font.name))
+        faces.push(
+          `@font-face{font-family:'${font.name}';src:${cssUrl(path)} format('woff2');font-weight:${weight};font-display:swap;}`
+        );
+    }
+    return element;
+  });
+  document.getElementById('fontUploadGroup').before(...groups);
+  const style = document.createElement('style');
+  style.id = 'bb-font-catalog';
+  style.textContent = faces.join('');
+  document.head.appendChild(style);
 }
 
 export function restoreFontControl(local = {}) {
   const select = document.getElementById('fontSelect');
   const group = document.getElementById('fontUploadGroup');
   const customName = document.getElementById('customFontName');
+  const legacy = document.getElementById('fontLegacyGroup');
   group.replaceChildren();
+  legacy.replaceChildren();
   const custom = local.font?.startsWith('data:') && isValidFont(local.font);
   if (custom) {
     const name = local.fontName || 'Uploaded font';
@@ -31,12 +58,17 @@ export function restoreFontControl(local = {}) {
     customName.textContent = 'No custom font yet';
   }
   customName.classList.toggle('active', custom);
-  select.value = local.font || '';
+  // A font from an older version stays selected even though it is no longer offered.
+  const font = local.font || '';
+  if (font && !custom && ![...select.options].some((option) => option.value === font))
+    legacy.appendChild(new Option(font, font));
+  select.value = font;
   syncSelect(select);
   updateFontPreviewLive(local.font);
 }
 
 export function initFonts(local) {
+  renderFontOptions();
   restoreFontControl(local);
   const upload = document.getElementById('fontUpload');
   document.getElementById('fontSelect').addEventListener('change', async (event) => {

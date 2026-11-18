@@ -167,3 +167,28 @@ test('focal-point previews reuse image data and update only a small position sty
   assert.ok(positionStyle.textContent.length < 150);
   assert.equal(hub.calls.writes.length, 0);
 });
+
+test('activity icons get a page-coloured silhouette underneath, removed again when disabled', async (t) => {
+  const icon =
+    '<div class="stream-panel-activity-icon"><svg viewBox="0 0 38 38"><path fill="currentColor" fill-rule="evenodd" d="M0 0h38v38H0zM4 4v30h30V4z"></path></svg></div>';
+  const hub = createHub(initial);
+  const page = await createDom(hub, {
+    html: `<!DOCTYPE html><html><head></head><body><main>${icon}</main></body></html>`,
+  });
+  t.after(page.close);
+  const fill = () => page.document.querySelector('.bb-icon-fill');
+  await waitFor(() => fill());
+  assert.equal(fill().getAttribute('fill-rule'), 'nonzero');
+  assert.equal(fill().nextElementSibling.getAttribute('fill-rule'), 'evenodd');
+  assert.match(
+    page.document.querySelector('#bb-custom-theme').textContent,
+    /\.bb-icon-fill\s*\{\s*fill: var\(--page-bg\)/
+  );
+  // Icons rendered later by the SPA are filled too, exactly once.
+  page.document.querySelector('main').insertAdjacentHTML('beforeend', icon);
+  await waitFor(() => page.document.querySelectorAll('.bb-icon-fill').length === 2);
+  await hub.storage.sync.set({ masterEnabled: false });
+  await waitFor(() => !fill());
+  assert.equal(page.document.querySelectorAll('[data-bb-filled]').length, 0);
+  assert.deepEqual(page.errors, []);
+});

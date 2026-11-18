@@ -181,23 +181,35 @@ test('custom domain permission is requested once and declined requests never per
   assert.match(page.$('customDomainStatus').textContent, /Connected/);
 });
 
-test('covers refresh after navigation; keyboard positioning retains zero coordinates and saves once', async (t) => {
+test('covers refresh after navigation; the crop frame keeps zero coordinates and saves once per key', async (t) => {
+  const crop = { x: 0, y: 100, scale: 40, rotate: 0, aspect: 1.5 };
   const page = await setup(t, defaults, {
-    courseCovers: { CMPS360: { imageUrl: imageData, position: '0% 100%' } },
+    courseCovers: { CMPS360: { imageUrl: imageData, crop } },
   });
+  page.document.querySelector('.tab-btn[data-tab="covers"]').click();
+  // Off the course list the menu is locked with a hint.
+  await waitFor(() => page.$('courseSelect').disabled);
+  assert.equal(page.$('coursesEmpty').hidden, false);
   page.content.document.querySelector('main').innerHTML =
     '<article class="element-card"><span class="multi-column-course-id">CMPS360</span><h4>Data Visualization</h4><div class="course-banner"></div></article>';
-  page.document.querySelector('.tab-btn[data-tab="covers"]').click();
+  page.$('refreshCoursesBtn').click();
   await waitFor(() => page.$('courseSelect').options.length === 2);
+  assert.equal(page.$('courseSelect').disabled, false);
   change(page.window, page.$('courseSelect'), 'CMPS360');
-  assert.equal(page.$('coverFocal').style.left, '0%');
-  assert.equal(page.$('coverFocal').style.top, '100%');
+  assert.equal(page.$('cropBox').style.left, '0%');
+  assert.equal(page.$('cropBox').style.top, '100%');
   const before = page.hub.calls.writes.length;
   page
-    .$('coverFocal')
+    .$('cropBox')
     .dispatchEvent(new page.window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-  await waitFor(() => page.hub.values.local.courseCovers.CMPS360.position === '2% 100%');
+  await waitFor(() => page.hub.values.local.courseCovers.CMPS360.crop?.x === 1);
+  assert.equal(page.hub.values.local.courseCovers.CMPS360.crop.y, 100);
   assert.equal(page.hub.calls.writes.length, before + 1);
+  await waitFor(() =>
+    page.content.document
+      .getElementById('bb-cover-position-CMPS360')
+      ?.textContent.includes('translate(-1%,-100%)')
+  );
   change(page.window, page.$('courseSelect'), '');
   assert.equal(page.$('coverEditor').disabled, true);
   assert.deepEqual(page.errors, []);

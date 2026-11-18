@@ -292,6 +292,24 @@ bb-ui-pagehelp .js-page-help .ms-Button.ms-Button--icon:is([aria-expanded='true'
   background-color: transparent !important;
 }
 
+/* ACTIVITY STREAM icon interiors: silhouettes added by content/streamIcons.js hide the
+   timeline line inside each outline without filling the square box around it. */
+.stream-panel-activity-icon .bb-icon-fill {
+  fill: var(--page-bg) !important;
+  stroke: none !important;
+}
+
+/* LOADING SPINNER: <bb-ui-circular-progress> arc. Its stroke (#a234b5) comes from a
+   hashed makeStyles rule in the cross-origin CDN sheet, so Tier 3 cannot remap it;
+   the custom-element tag is stable. MUI's own spinner follows the same accent. */
+bb-ui-circular-progress svg path,
+.MuiCircularProgress-circle {
+  stroke: var(--accent-on-page) !important;
+}
+.MuiCircularProgress-root {
+  color: var(--accent-on-page) !important;
+}
+
 /* GRADES page: course-activity chart icon is a black-filled legacy SVG. */
 .grade-progress-chart-link .svg-icon {
   fill: var(--page-text-2);

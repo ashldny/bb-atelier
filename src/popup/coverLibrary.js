@@ -1,6 +1,7 @@
 import { MAX_IMAGE_SIZE, validateFileSize, sanitizeUrl } from '../utils/sanitization.js';
 import { updateStored } from '../utils/storage.js';
 import { showToast } from '../utils/ui.js';
+import { confirmDialog } from './dialog.js';
 
 export async function readImage(file) {
   if (!validateFileSize(file.size, MAX_IMAGE_SIZE)) throw new Error('Choose an image under 2 MB.');
@@ -92,7 +93,13 @@ export function initCoverLibrary(getCourse, saveCover) {
   });
   document.getElementById('clearLibraryBtn').addEventListener('click', async () => {
     if (!library.length) return;
-    if (!confirm('Clear the image library? Your assigned course covers will stay.')) return;
+    const confirmed = await confirmDialog({
+      title: 'Clear the image library?',
+      message:
+        'All saved images will be removed. Covers already set on your courses stay as they are.',
+      confirmLabel: 'Clear library',
+    });
+    if (!confirmed) return;
     await chrome.storage.local.set({ coverLibrary: [] });
   });
 }
