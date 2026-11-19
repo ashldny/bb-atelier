@@ -17,13 +17,7 @@
   <img src="docs/screenshots/typography.png" alt="Typeface picker" width="250" />
 </p>
 
-<p align="center">
-  <a href="docs/video/bb-atelier-promo.mp4">
-    <img src="docs/video/promo-poster.jpg" alt="Bb Atelier promo video" width="760" />
-  </a>
-  <br />
-  <a href="docs/video/bb-atelier-promo.mp4"><strong>▶ Watch the 18-second promo</strong></a>
-</p>
+https://github.com/user-attachments/assets/2d77eba9-4c1e-48ee-ab37-5b505a3c04bc
 
 ---
 
