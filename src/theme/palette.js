@@ -230,6 +230,7 @@ export function derivePalette(pageBg, accent, navbarChoice, pageText) {
     ...courseColorTokens(accent),
     // Blackboard's logo artwork is white; darken it on a light sidebar.
     '--logo-filter': isDark(navbarBg) ? 'none' : 'brightness(0) opacity(0.85)',
+    '--page-logo-filter': dark ? 'none' : 'brightness(0) opacity(0.85)',
     // Brand
     '--palette-mode': dark ? 'dark' : 'light',
     '--palette-brand-main': brandMain,

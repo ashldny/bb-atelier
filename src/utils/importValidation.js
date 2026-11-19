@@ -1,7 +1,7 @@
 import { DEFAULT_BG, DEFAULT_ACCENT } from '../utils/constants.js';
 import { isValidHex } from '../utils/ui.js';
 import { isValidFont, sanitizeUrl } from '../utils/sanitization.js';
-import { normalizePalette } from '../theme/settings.js';
+import { normalizePalette, paletteOf } from '../theme/settings.js';
 import { normalizeTheme } from '../theme/darkReaderTheme.js';
 import { normalizeCoverEntry } from '../utils/covers.js';
 
@@ -46,6 +46,10 @@ export function validateSettingsImport(raw) {
     }),
     masterEnabled: source.masterEnabled !== false,
     bbTheme: normalizeTheme(source.bbTheme),
+    // "Match my device" light/dark slots; invalid slots are dropped, not imported.
+    followSystem: source.followSystem === true,
+    lightPalette: paletteOf(source.lightPalette),
+    darkPalette: paletteOf(source.darkPalette),
   };
   const local = {};
   const data = isRecord(raw.local) ? raw.local : {};

@@ -120,8 +120,8 @@ export async function renderSaved() {
       <span class="saved-swatches" aria-hidden="true">${[theme.pageBg, theme.navbar || sidebarShade(theme.pageBg), theme.accent].map((color) => `<span class="mini-swatch" style="background:${escapeHtml(color)}"></span>`).join('')}</span>
       <span class="saved-name">${escapeHtml(name)}</span>
     </button>
-    <button class="btn tiny edit-saved" type="button" aria-label="Edit ${escapeHtml(name)}">Edit</button>
-    <button class="btn tiny danger delete-saved" type="button" aria-label="Delete ${escapeHtml(name)}">Delete</button>
+    <button class="row-icon edit-saved" type="button" aria-label="Edit ${escapeHtml(name)}" title="Edit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="row-icon danger delete-saved" type="button" aria-label="Delete ${escapeHtml(name)}" title="Delete"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
   </div>`
     )
     .join('');

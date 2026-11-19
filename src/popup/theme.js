@@ -1,4 +1,4 @@
-import { normalizePalette } from '../theme/settings.js';
+import { normalizePalette, paletteOf, resolvePalette, schemeSlot } from '../theme/settings.js';
 import { derivePalette } from '../theme/palette.js';
 import { contrastText, isDark, sidebarShade } from '../theme/colorUtils.js';
 import { PRESET_THEMES } from '../theme/presets.js';
@@ -70,11 +70,20 @@ export async function applyCurrentTheme(value = readPalette(), { notify = false 
   const next = normalizePalette(value);
   setPaletteInputs(next);
   try {
-    await chrome.storage.sync.set(next);
+    // "Match my device": the theme also fills the light or dark slot it belongs to.
+    const { followSystem } = await chrome.storage.sync.get('followSystem');
+    const slot = followSystem ? schemeSlot(next) : null;
+    await chrome.storage.sync.set(slot ? { ...next, [slot]: paletteOf(next) } : next);
     // Storage updates every open Blackboard tab; this also recovers a missing receiver.
     await sendToTab({ action: 'applyThemeCSS' });
     document.dispatchEvent(new Event('bb-status-change'));
-    if (notify) showToast('Theme saved');
+    const deviceSlot = matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'darkPalette'
+      : 'lightPalette';
+    if (slot && slot !== deviceSlot) {
+      const mode = slot === 'darkPalette' ? 'dark' : 'light';
+      showToast(`Saved as your ${mode} theme. It shows when your device is in ${mode} mode.`);
+    } else if (notify) showToast('Theme saved');
   } catch {
     showToast('Could not save the theme. Try again.', 'error');
   }
@@ -118,7 +127,8 @@ function renderPresets() {
 
 export function initTheme(sync, local) {
   renderPresets();
-  setPaletteInputs(sync);
+  // With "match my device" on, edit the theme the page is showing right now.
+  setPaletteInputs(resolvePalette(sync, matchMedia('(prefers-color-scheme: dark)').matches));
   initFonts(local);
   initTabGroup('.sub-tab-btn', '.sub-content', 'subtab');
   // Open the preset list that contains the current theme.

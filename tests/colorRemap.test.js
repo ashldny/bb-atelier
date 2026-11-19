@@ -166,6 +166,69 @@ test('course colour indicators lean toward the accent but stay distinct', async 
     /\.element-card\.course-color-2::before \{ background-color: var\(--course-color-2\) !important; \}/
   );
   assert.match(css, /\.element-details\.course-color-classic \{ border-left-color/);
+  // Messages course bars and the course gradebook summary share the tint.
+  assert.match(
+    css,
+    /\.messages-container-summary\.course-color-4::before \{ background-color: var\(--course-color-4\)/
+  );
+  assert.match(
+    css,
+    /\.student-grade-overview\.course-color-9 \{ border-bottom-color: var\(--course-color-9\)/
+  );
+  // Course/organization chrome takes the navbar colours; no hashed classes.
+  const { buildCourseChromeCss } = await import('../src/theme/courseChromeCss.js');
+  const chrome = buildCourseChromeCss();
+  assert.match(
+    chrome,
+    /course-page-header header,\s*\.bb-course-navigation \[role="toolbar"\] \{\s*background-color: var\(--navbar-bg\)/
+  );
+  assert.match(
+    chrome,
+    /\[data-analytics-id\^="course\.header\."\]:is\(:hover, :focus-visible\) \{\s*background-color: var\(--navbar-bg-darker\)/
+  );
+  assert.doesNotMatch(chrome, /muiltr-|makeStyles/);
   const { overrides } = derivePalette('#f0f4f8', '#2563eb', null, null);
   assert.equal(overrides['--course-color-2'], tokens['--course-color-2']);
+});
+
+test('login page takes the page surface, theme buttons and an accent spinner', async () => {
+  const { buildLoginCss } = await import('../src/theme/loginCss.js');
+  const css = buildLoginCss();
+  assert.match(css, /body\.bb-login \{\s*background-color: var\(--page-bg\) !important/);
+  assert.match(css, /#externalloginlink \{\s*background-color: var\(--page-bg-lighter\)/);
+  // SSO sign-out page: no purple frames; Cancel matches the theme.
+  assert.match(css, /\.warning_message_button \{\s*background: none !important;\s*border: 0/);
+  assert.match(css, /\.lb-wrapper \.button-2 \{\s*background-color: var\(--page-bg-lighter\)/);
+  assert.match(css, /#loader \{\s*border-color: var\(--accent-on-page\) !important/);
+  assert.doesNotMatch(css, /muiltr-|makeStyles/);
+  const light = derivePalette('#fefce8', '#2563eb', null, null).overrides;
+  const dark = derivePalette('#1a1a1a', '#2563eb', null, null).overrides;
+  assert.notEqual(light['--page-logo-filter'], 'none', 'white logo darkened on a light page');
+  assert.equal(dark['--page-logo-filter'], 'none');
+});
+
+test('grades charts, pills and gradebook markers follow the theme', async () => {
+  const { buildGradesCss } = await import('../src/theme/gradesCss.js');
+  const css = buildGradesCss();
+  assert.match(css, /\.highcharts-background,[\s\S]*?fill: var\(--page-bg-lighter\) !important/);
+  assert.match(css, /\[stroke="#c575d2" i\] \{\s*stroke: var\(--accent-on-page\)/);
+  assert.match(css, /\.customGradePill \* \{\s*color: #1c1c1c !important/);
+  assert.match(css, /svg\[color="#a234b5" i\] \{\s*color: var\(--accent-on-page\)/);
+  assert.doesNotMatch(css, /muiltr-|makeStyles/);
+  const { buildCourseColorCss } = await import('../src/theme/courseColors.js');
+  assert.match(buildCourseColorCss(), /\.panel-wrap\.course-color-2 \{ border-top-color: var\(--course-color-2\)/);
+  // Ultra purple (tab indicators) follows the accent like Ultra blue.
+  assert.equal(remapValue('background-color', 'rgb(162, 52, 181)'), 'var(--accent-surface)');
+});
+
+test('match my device picks the slot for the device mode and falls back safely', async () => {
+  const { resolvePalette } = await import('../src/theme/settings.js');
+  const base = { pageBg: '#1a1a1a', accent: '#670d2f', navbar: null, pageText: '#e0e0e0' };
+  const light = { pageBg: '#fdf2f6', accent: '#c2416f', navbar: null, pageText: null };
+  assert.equal(resolvePalette(base, false), base);
+  const on = { ...base, followSystem: true, lightPalette: light, darkPalette: null };
+  assert.equal(resolvePalette(on, false).pageBg, '#fdf2f6');
+  assert.equal(resolvePalette(on, true).pageBg, '#1a1a1a', 'missing dark slot keeps current');
+  const bad = { ...on, lightPalette: { pageBg: 'red', accent: '#000000' } };
+  assert.equal(resolvePalette(bad, false).pageBg, '#1a1a1a', 'invalid slot is ignored');
 });

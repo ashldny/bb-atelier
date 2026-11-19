@@ -29,10 +29,11 @@ export function initCoverLibrary(getCourse, saveCover) {
   function render() {
     const grid = document.getElementById('libraryGrid');
     grid.replaceChildren();
+    document.getElementById('clearLibraryBtn').disabled = !library.length;
     if (!library.length) {
       const empty = document.createElement('p');
       empty.className = 'library-empty';
-      empty.textContent = 'Upload images to reuse across your courses.';
+      empty.textContent = 'No saved images yet.';
       grid.appendChild(empty);
       return;
     }

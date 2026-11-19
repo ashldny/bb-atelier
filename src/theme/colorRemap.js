@@ -58,6 +58,11 @@ export const ULTRA_UI_FAMILIES = [
     [41, 139, 175],
     [126, 200, 228],
   ],
+  // Ultra purple: tab indicators, unread markers, focus underlines.
+  [
+    [162, 52, 181],
+    [197, 117, 210],
+  ],
 ];
 
 /**

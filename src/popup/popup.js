@@ -1,6 +1,8 @@
 import { initTabs } from './tabs.js';
 import { initTheme } from './theme.js';
 import { initSaved } from './savedThemes.js';
+import { initSystemScheme } from './systemScheme.js';
+import { initAbout } from './about.js';
 import { initCourseCovers } from './courseCovers.js';
 import { initSettingsTab } from './settingsTab.js';
 import { initCoverageAudit } from './coverageAudit.js';
@@ -22,6 +24,7 @@ async function updateStatus() {
         : 'Choose a theme to apply'
     : 'Open Blackboard to see your changes';
   status.dataset.state = connected ? (paused ? 'paused' : 'connected') : 'idle';
+  status.title = status.textContent;
 }
 
 async function boot() {
@@ -38,8 +41,10 @@ async function boot() {
     initCustomSelects();
     initTheme(sync, local);
     initSaved();
+    initSystemScheme(sync);
     initSettingsTab(sync);
     initCoverageAudit();
+    initAbout();
     // Course discovery runs on demand when its tab opens.
     await initCourseCovers();
     initTabs(local.activeTab || stored.activeTab);

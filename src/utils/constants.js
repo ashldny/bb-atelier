@@ -18,4 +18,25 @@ export const DEFAULT_SETTINGS = {
 };
 
 export const DEFAULT_POSITION = '50% 50%';
-export const PALETTE_KEYS = ['pageBg', 'accent', 'navbar', 'pageText', 'customMode'];
+// Theme keys in sync storage; the last three drive "match my device" light/dark switching.
+export const PALETTE_KEYS = [
+  'pageBg',
+  'accent',
+  'navbar',
+  'pageText',
+  'customMode',
+  'followSystem',
+  'lightPalette',
+  'darkPalette',
+];
+
+// About tab feedback goes to a Google Form, anonymously: only the message and the
+// extension version are sent. formId is the id in the form's /forms/d/e/<id>/viewform
+// link; the entries are its "entry.<number>" field names. Empty formId = not set up.
+export const FEEDBACK_FORM = {
+  formId: '1FAIpQLSd_Yn2gI0bhGH8WUkMxgkRLoO5uoy_CGRK1kJVG89wUHQzg2g',
+  messageEntry: 'entry.1538721259',
+  // The form has no version question; add one and put its entry id here to collect it.
+  versionEntry: '',
+};
+export const MAX_FEEDBACK_LENGTH = 2000;

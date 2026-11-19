@@ -5,7 +5,9 @@
 //  (`.course-color-1` … `.course-color-10`, plus grey `.course-color-classic`)
 //  and paints them as stripes: the course-card and grades-tile bar
 //  (`.element-card::before`), the activity-stream bar (`.element-details`
-//  left border) and the calendar due-item outline. The values live in a
+//  left border), the calendar due-item outline, the Messages course bar
+//  (`.messages-container-summary::before`) and the course gradebook summary
+//  (`.student-grade-overview` bottom border). The values live in a
 //  cross-origin CDN stylesheet, so they are recorded here (read from the
 //  live site) and blended toward the user's accent. Each course keeps its
 //  own recognisable hue, but the set now leans into the theme.
@@ -61,6 +63,9 @@ export function buildCourseColorCss() {
         `.element-card${cls}::before { background-color: ${token} !important; }`,
         `.element-details${cls} { border-left-color: ${token} !important; }`,
         `.element-card.due-item${cls} { border-color: ${token} !important; }`,
+        `.messages-container-summary${cls}::before { background-color: ${token} !important; }`,
+        `.student-grade-overview${cls} { border-bottom-color: ${token} !important; }`,
+        `.panel-wrap${cls} { border-top-color: ${token} !important; }`,
       ].join('\n');
     })
     .join('\n');

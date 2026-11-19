@@ -92,6 +92,10 @@ function start() {
     early.length = 0;
     if (document.readyState === 'loading')
       document.addEventListener('DOMContentLoaded', render, { once: true });
+    // "Match my device": repaint when the system switches between light and dark.
+    globalThis
+      .matchMedia?.('(prefers-color-scheme: dark)')
+      .addEventListener?.('change', () => sync.followSystem && scheduleRender());
   })();
 
   async function handle(message) {

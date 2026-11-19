@@ -30,6 +30,9 @@
 
 import { purgeDarkReaderCss } from '../utils/cssSanitizer.js';
 import { buildCourseColorCss } from './courseColors.js';
+import { buildCourseChromeCss } from './courseChromeCss.js';
+import { buildLoginCss } from './loginCss.js';
+import { buildGradesCss } from './gradesCss.js';
 
 /**
  * Build the complete theme CSS string from palette overrides
@@ -111,9 +114,17 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
 }
 /* SUPERSEDES earlier broad rule: .stream-item .js-title-link, [class*="stream-item"] .js-title-link */
 
-#streams-filter-label {
+/* Activity stream "Filter" label sits on the field's top outline. Rather than paint a
+   patch (which never matches the surface behind it), open MUI's outline notch to the
+   label's width and let whatever is behind the label show through. */
+#streams-filter-label,
+#streams-filter-label::before {
   color: var(--page-text-1);
-  background-color: var(--page-bg);
+  background: transparent !important;
+}
+#streams-filter-combobox ~ .MuiOutlinedInput-notchedOutline > legend {
+  max-width: 100% !important;
+  background: transparent !important;
 }
 
 .MuiInputLabel-shrink::before {
@@ -158,17 +169,17 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
   color: var(--page-text-1);
 }
 
+/* Activity stream timeline (line + start circle): a quiet guide in the page's own hue,
+   so the icons and dates stay the focus. */
 .base-recent-activity .activity-stream .activity-group .stream-item-container:after,
 .base-recent-activity .activity-stream .activity-group:before {
-  background-color: var(--page-text-2);
+  background-color: color-mix(in srgb, var(--page-border), var(--page-text-2) 25%);
 }
-/* Value changed from Color1 in earlier spec to Color2 here — this replaces the old assignment */
 
 .base-recent-activity .activity-stream .activity-group:after {
   background-color: var(--page-bg);
-  border: 2px solid var(--page-text-2);
+  border: 2px solid color-mix(in srgb, var(--page-border), var(--page-text-2) 25%);
 }
-/* Value changed from Color1 in earlier spec to Color2 here — this replaces the old assignment */
 
 /* PAGE TEXT/ICON COLOR 3 (lighten 70%) */
 /* Activity stream hover band: a quiet shadow of the page, not grey text. */
@@ -378,10 +389,7 @@ bb-ui-circular-progress svg path,
    fallback only if selector can't be removed: background-color: var(--page-bg) !important; */
 `);
 
-  // Course colour stripes (generated per Blackboard course colour).
-  lines.push('/* COURSE COLOUR INDICATORS — see theme/courseColors.js */');
-  lines.push(buildCourseColorCss());
-
-  const raw = lines.join('\n');
-  return purgeDarkReaderCss(raw);
+  // Page-specific Tier 2 modules, each documented in its own file.
+  lines.push(buildCourseColorCss(), buildCourseChromeCss(), buildLoginCss(), buildGradesCss());
+  return purgeDarkReaderCss(lines.join('\n'));
 }

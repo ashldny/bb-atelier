@@ -2,7 +2,7 @@ import { enable, disable, setFetchMethod } from 'darkreader';
 import { normalizeTheme, toDarkReaderTheme, buildFixes } from '../theme/darkReaderTheme.js';
 import { derivePalette } from '../theme/palette.js';
 import { buildFullThemeCss } from '../theme/cssBuilder.js';
-import { normalizePalette } from '../theme/settings.js';
+import { normalizePalette, resolvePalette } from '../theme/settings.js';
 import { purgeDarkReaderCss } from '../utils/cssSanitizer.js';
 import { hardenedFetch } from '../utils/fetchGuard.js';
 import { isDark, contrastText } from '../theme/colorUtils.js';
@@ -33,7 +33,8 @@ export function createThemeController(styles) {
       signature = '';
       previewing = false;
     }
-    const palette = normalizePalette(settings);
+    const prefersDark = globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches === true;
+    const palette = normalizePalette(resolvePalette(settings, prefersDark));
     const options = normalizeTheme(settings.bbTheme);
     const nextEngine = options.engine;
     const nextSignature = JSON.stringify([

@@ -11,7 +11,7 @@ import { restoreFontControl } from './fonts.js';
 
 export function initSettingsTab(sync) {
   document.getElementById('versionLabel').textContent =
-    `Bb Atelier · ${chrome.runtime.getManifest().version}`;
+    `Version ${chrome.runtime.getManifest().version}`;
   const input = document.getElementById('customDomainInput');
   const button = document.getElementById('saveCustomDomainBtn');
   const status = document.getElementById('customDomainStatus');

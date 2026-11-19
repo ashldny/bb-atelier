@@ -349,3 +349,141 @@ test('reset clears the data promised in its prompt and applies defaults without 
   assert.equal(page.window.location.pathname, '/popup.html');
   assert.deepEqual(page.errors, []);
 });
+
+test('reset all covers confirms first, clears every cover and keeps the library', async (t) => {
+  const page = await setup(t, defaults, {
+    courseCovers: { a: imageData, b: imageData },
+    coverLibrary: [imageData],
+  });
+  await waitFor(() => !page.$('resetAllCoversBtn').disabled);
+  page.$('resetAllCoversBtn').click();
+  await waitFor(() => !page.$('confirmDialog').hidden);
+  page.$('confirmCancel').click();
+  assert.equal(Object.keys(page.hub.values.local.courseCovers).length, 2);
+  page.$('resetAllCoversBtn').click();
+  await waitFor(() => !page.$('confirmDialog').hidden);
+  page.$('confirmOk').click();
+  await waitFor(() => Object.keys(page.hub.values.local.courseCovers).length === 0);
+  await waitFor(() => page.$('resetAllCoversBtn').disabled);
+  assert.equal(page.hub.values.local.coverLibrary.length, 1);
+  assert.deepEqual(page.errors, []);
+});
+
+test('match my device keeps a light and a dark theme and the page shows the device one', async (t) => {
+  // The test window reports a light device (matchMedia → false).
+  const page = await setup(t);
+  page.$('followSystemToggle').click();
+  await waitFor(() => page.hub.values.sync.followSystem === true);
+  // The current dark theme fills the dark slot; light starts from the first light preset.
+  assert.equal(page.hub.values.sync.darkPalette.pageBg, '#1a1a1a');
+  assert.equal(page.hub.values.sync.lightPalette.pageBg, '#ffffff');
+  await waitFor(() =>
+    page.document.querySelector('.preset-card[data-index="0"]').classList.contains('scheme-slot')
+  );
+  await waitFor(() =>
+    page.content.document
+      .querySelector('#bb-custom-theme')
+      .textContent.includes('--page-bg: #ffffff')
+  );
+  // Picking a dark preset fills only the dark slot; the light device keeps the light theme.
+  const neon = [...page.document.querySelectorAll('.preset-card')].find((card) =>
+    card.textContent.includes('Neon City')
+  );
+  neon.click();
+  await waitFor(() => page.hub.values.sync.darkPalette.pageBg === '#0b0d1e');
+  assert.equal(page.hub.values.sync.lightPalette.pageBg, '#ffffff');
+  await waitFor(() => neon.classList.contains('scheme-slot'));
+  assert.match(page.$('toast')?.textContent || page.document.body.textContent, /dark theme/);
+  assert.ok(
+    page.content.document
+      .querySelector('#bb-custom-theme')
+      .textContent.includes('--page-bg: #ffffff')
+  );
+  // Turning it off keeps what the page shows now.
+  page.$('followSystemToggle').click();
+  await waitFor(() => page.hub.values.sync.followSystem === false);
+  assert.equal(page.hub.values.sync.pageBg, '#ffffff');
+  assert.deepEqual(page.errors, []);
+});
+
+test('a settings backup carries covers with their crop frame and the device-mode themes', async (t) => {
+  const crop = { x: 40, y: 50, scale: 60, rotate: 5, aspect: 1.5 };
+  const page = await setup(t, defaults, {
+    courseCovers: { _1_1: { imageUrl: imageData, position: '50% 50%', crop } },
+    coverLibrary: [{ id: 'a', dataUrl: imageData }],
+  });
+  await page.hub.storage.sync.set({
+    followSystem: true,
+    lightPalette: { pageBg: '#fdf2f6', accent: '#c2416f', navbar: null, pageText: null },
+    darkPalette: { pageBg: '#0b0d1e', accent: '#ff2e97', navbar: null, pageText: '#cfe9ff' },
+  });
+  let blob;
+  page.window.URL.createObjectURL = (value) => {
+    blob = value;
+    return 'blob:test';
+  };
+  page.window.URL.revokeObjectURL = () => {};
+  page.window.HTMLAnchorElement.prototype.click = () => {};
+  page.$('exportSettingsBtn').click();
+  await waitFor(() => !!blob);
+  const payload = await new Promise((resolve) => {
+    const reader = new page.window.FileReader();
+    reader.onload = () => resolve(JSON.parse(reader.result));
+    reader.readAsText(blob);
+  });
+  await page.hub.storage.local.set({ courseCovers: {}, coverLibrary: [] });
+  await page.hub.storage.sync.set({ followSystem: false, lightPalette: null, darkPalette: null });
+  Object.defineProperty(page.$('importSettingsFile'), 'files', {
+    value: [{ size: 500, text: async () => JSON.stringify(payload) }],
+    configurable: true,
+  });
+  page.$('importSettingsFile').dispatchEvent(new page.window.Event('change', { bubbles: true }));
+  await waitFor(() => page.hub.values.local.courseCovers._1_1);
+  assert.deepEqual(page.hub.values.local.courseCovers._1_1.crop, crop);
+  assert.equal(page.hub.values.local.coverLibrary.length, 1);
+  assert.equal(page.hub.values.sync.followSystem, true);
+  assert.equal(page.hub.values.sync.darkPalette.pageText, '#cfe9ff');
+  assert.deepEqual(page.errors, []);
+});
+
+test('about tab feedback opens an in-popup dialog and never opens a mail app', async (t) => {
+  const page = await setup(t);
+  page.document.querySelector('.tab-btn[data-tab="about"]').click();
+  assert.match(page.$('versionLabel').textContent, /^Version /);
+  assert.equal(page.document.querySelector('a[href^="mailto:"]'), null);
+  page.$('feedbackBtn').click();
+  await waitFor(() => !page.$('feedbackDialog').hidden);
+  // Empty notes are not sent.
+  page.$('feedbackForm').dispatchEvent(new page.window.Event('submit', { cancelable: true }));
+  await waitFor(() => /Write a note first/.test(page.$('feedbackStatus').textContent));
+  page.$('feedbackCancel').click();
+  assert.equal(page.$('feedbackDialog').hidden, true);
+  assert.deepEqual(page.errors, []);
+});
+
+test('feedback posts only the message and version to the configured form', async () => {
+  const { FEEDBACK_FORM } = await import('../src/utils/constants.js');
+  const { sendFeedback } = await import('../src/utils/feedback.js');
+  const saved = { ...FEEDBACK_FORM };
+  Object.assign(FEEDBACK_FORM, {
+    formId: '1FAIpQLSexampleexampleexample',
+    messageEntry: 'entry.111',
+    versionEntry: 'entry.222',
+  });
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => calls.push({ url, options });
+  try {
+    await sendFeedback('  Love the presets  ', '2.0');
+    assert.equal(
+      calls[0].url,
+      'https://docs.google.com/forms/d/e/1FAIpQLSexampleexampleexample/formResponse'
+    );
+    assert.equal(calls[0].options.credentials, 'omit');
+    assert.equal(String(calls[0].options.body), 'entry.111=Love+the+presets&entry.222=2.0');
+    await assert.rejects(sendFeedback('   ', '2.0'), /Write a note first/);
+  } finally {
+    globalThis.fetch = realFetch;
+    Object.assign(FEEDBACK_FORM, saved);
+  }
+});

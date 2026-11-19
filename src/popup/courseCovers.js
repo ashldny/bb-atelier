@@ -6,6 +6,7 @@ import { showToast, debounce } from '../utils/ui.js';
 import { initCoverLibrary, readImage, addToLibrary } from './coverLibrary.js';
 import { initCoverCrop, DEFAULT_BANNER_ASPECT } from './coverCrop.js';
 import { syncSelect } from './customSelect.js';
+import { confirmDialog } from './dialog.js';
 
 export async function initCourseCovers() {
   let covers = (await chrome.storage.local.get('courseCovers')).courseCovers || {};
@@ -159,11 +160,37 @@ export async function initCourseCovers() {
     if (image.getAttribute('src'))
       showToast('This image could not load. Try uploading the file.', 'error');
   });
+  const resetAll = document.getElementById('resetAllCoversBtn');
+  function renderCount() {
+    resetAll.disabled = !Object.keys(covers).length;
+  }
+  resetAll.addEventListener('click', async () => {
+    const count = Object.keys(covers).length;
+    if (!count) return;
+    const confirmed = await confirmDialog({
+      title: 'Reset all course covers?',
+      message: `${count === 1 ? 'The custom cover' : `All ${count} custom covers`} will be removed and Blackboard's own images will come back. Images in your library stay.`,
+      confirmLabel: 'Reset covers',
+    });
+    if (!confirmed) return;
+    previewCrop.cancel();
+    try {
+      // Storage updates every open Blackboard tab, which restores the original banners.
+      await chrome.storage.local.set({ courseCovers: {} });
+      document.dispatchEvent(new Event('bb-status-change'));
+      showToast('All covers reset');
+    } catch {
+      showToast('Could not reset the covers. Try again.', 'error');
+    }
+  });
+
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.courseCovers) {
       covers = changes.courseCovers.newValue || {};
       render();
+      renderCount();
     }
   });
   render();
+  renderCount();
 }
