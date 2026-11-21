@@ -5,7 +5,7 @@ import { parsePosition, fitCropToImage } from '../src/utils/covers.js';
 import { contrastRatio, contrastText } from '../src/theme/colorUtils.js';
 import { validateSettingsImport, validateSavedTheme } from '../src/utils/importValidation.js';
 import { isValidFont, sanitizeUrl, cssUrl } from '../src/utils/sanitization.js';
-import { normalizeTheme } from '../src/theme/darkReaderTheme.js';
+import { normalizeTheme } from '../src/theme/themeOptions.js';
 import { purgeDarkReaderCss } from '../src/utils/cssSanitizer.js';
 import { derivePalette } from '../src/theme/palette.js';
 
@@ -50,7 +50,7 @@ test('automatic text meets WCAG normal text contrast across gray and saturated b
   }
 });
 
-test('settings imports allowlist fields and preserve optional text, fonts and engine preferences', () => {
+test('settings imports allowlist fields and preserve optional text and fonts, and drop the retired engine field', () => {
   const data = validateSettingsImport({
     sync: {
       pageBg: '#ffffff',
@@ -65,7 +65,7 @@ test('settings imports allowlist fields and preserve optional text, fonts and en
   assert.equal(data.sync.evil, undefined);
   assert.equal(data.local.cachedCSS, undefined);
   assert.equal(data.sync.pageText, null);
-  assert.equal(data.sync.bbTheme.engine, 'darkreader');
+  assert.equal(data.sync.bbTheme.engine, undefined);
   assert.equal(data.sync.bbTheme.autoApply, false);
   assert.equal(data.sync.bbTheme.showToast, false);
   assert.equal(data.local.font, 'Noto Serif');
@@ -82,7 +82,11 @@ test('font/URL validation rejects script URLs and malformed data; CSS strings ar
   assert.equal(sanitizeUrl('javascript:alert(1)'), '');
   assert.equal(sanitizeUrl('data:text/html;base64,AAAA', { imageOnly: true }), '');
   assert.ok(cssUrl('https://test/image"\n.png').includes('\\22 '));
-  assert.equal(normalizeTheme({ scrollbarColor: 'red;}body{}' }).scrollbarColor, 'auto');
+  assert.deepEqual(normalizeTheme({ customDomain: '  qu.edu.qa  ', engine: 'darkreader' }), {
+    autoApply: true,
+    showToast: true,
+    customDomain: 'qu.edu.qa',
+  });
 });
 
 test('cached CSS cleanup handles uppercase, nested fallbacks and more than 30 declarations', () => {

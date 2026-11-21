@@ -224,22 +224,11 @@ test('covers refresh after navigation; the crop frame stays inside the image and
   assert.deepEqual(page.errors, []);
 });
 
-test('font reset and engine selector update persisted state without reloading the popup', async (t) => {
+test('font reset updates persisted state without reloading the popup', async (t) => {
   const page = await setup(t, defaults, { font: 'Inter', fontName: 'Inter' });
   page.$('resetFontBtn').click();
   await waitFor(() => !('font' in page.hub.values.local) && page.$('fontSelect').value === '');
   assert.equal(page.$('fontSelect').value, '');
-  const radio = page.document.querySelector('input[name="engine"][value="darkreader"]');
-  // Verify the settings contract independently of Dark Reader's real-browser rendering.
-  page.content.close();
-  page.hub.chrome('content');
-  page.hub.receivers[0].handlers.add((_message, _sender, respond) => {
-    respond({ success: true });
-    return true;
-  });
-  change(page.window, radio, true);
-  await waitFor(() => page.hub.values.sync.bbTheme?.engine === 'darkreader');
-  assert.ok(page.hub.calls.messages.some((message) => message.action === 'refreshSettings'));
   assert.equal(page.window.location.pathname, '/popup.html');
   assert.deepEqual(page.errors, []);
 });

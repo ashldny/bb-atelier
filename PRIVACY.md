@@ -26,9 +26,7 @@ You can delete all of it at any time by removing the extension, or by using **Re
 
 ## What Bb Atelier reads on Blackboard pages
 
-To restyle a page, Bb Atelier reads the page's own layout and stylesheets inside your browser. It does not read, store or send your courses, grades, messages, assignments or any other content, and it does not record the pages you visit.
-
-When a Blackboard page loads a stylesheet from another address, Bb Atelier may download that same stylesheet again so it can recolour it. These requests are sent without your cookies or login, and nothing is sent back.
+To restyle a page, Bb Atelier reads the page's own layout and stylesheets inside your browser. It does not read, store or send your courses, grades, messages, assignments or any other content, it does not record the pages you visit, and it makes no network requests of its own while restyling.
 
 ## Feedback
 
