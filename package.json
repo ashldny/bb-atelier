@@ -15,6 +15,7 @@
     "format": "prettier --write \"src/**/*.{js,css}\" \"*.{html,json,js}\"",
     "format:check": "prettier --check \"src/**/*.{js,css}\" \"*.{html,json,js}\"",
     "test": "node --test tests/*.test.js",
+    "package": "npm run build && node scripts/package-extension.js",
     "pretest": "npm run build"
   },
   "devDependencies": {
@@ -26,6 +27,7 @@
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "jsdom": "^29.1.1",
+    "jszip": "^3.10.2",
     "prettier": "^3.3.3",
     "rollup": "^4.9.6",
     "web-ext": "^10.8.0"

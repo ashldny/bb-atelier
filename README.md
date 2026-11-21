@@ -66,12 +66,15 @@ Bb Atelier works on Qatar University's Blackboard and on `*.blackboard.com`. For
 | `activeTab`, `scripting`      | Reconnect to an open Blackboard tab after an update |
 | Optional site access          | Only for a school address you connect yourself      |
 
+Read the full [privacy policy](PRIVACY.md).
+
 ## Development
 
 ```sh
 npm run dev     # rebuild on change
 npm test        # build, then run the test suite
 npm run lint    # ESLint and extension checks
+npm run package # build, then zip the store upload to dist/bb-atelier-<version>.zip
 ```
 
 `content.js` and `background.js` are build output, so edit the files in `src/` instead. [AGENTS.md](AGENTS.md) explains how the theme system is organised.
