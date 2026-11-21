@@ -5,7 +5,7 @@
 <h1 align="center">Bb Atelier</h1>
 
 <p align="center">
-  <strong>Make Blackboard Ultra feel like your own space.</strong><br />
+  <strong>Make Blackboard Ultra feel like yours.</strong><br />
   Themes, fonts and course covers for a calmer, prettier Blackboard.
 </p>
 
