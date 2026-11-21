@@ -12,6 +12,14 @@ export function escapeHtml(str) {
 
 export const MAX_FONT_SIZE = 512 * 1024;
 export const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+// Animated GIFs are far larger than stills, so they get their own ceiling.
+export const MAX_GIF_SIZE = 8 * 1024 * 1024;
+
+export function imageSizeLimit(mimeType) {
+  return /^image\/gif$/i.test(mimeType) ? MAX_GIF_SIZE : MAX_IMAGE_SIZE;
+}
+
+const base64Length = (bytes) => Math.ceil(bytes / 3) * 4;
 
 export function validateFileSize(size, limit) {
   return typeof size === 'number' && size > 0 && size <= limit;
@@ -21,12 +29,10 @@ export function sanitizeUrl(value, { imageOnly = false } = {}) {
   if (typeof value !== 'string') return '';
   const input = value.trim();
   if (/^data:/i.test(input)) {
-    if (
-      imageOnly &&
-      (!/^data:image\/(png|jpe?g|gif|webp|avif);base64,[a-zA-Z0-9+/]+=*$/i.test(input) ||
-        input.length > Math.ceil(MAX_IMAGE_SIZE / 3) * 4 + 100)
-    )
-      return '';
+    if (imageOnly) {
+      const match = /^data:(image\/(?:png|jpe?g|gif|webp|avif));base64,[a-zA-Z0-9+/]+=*$/i.exec(input);
+      if (!match || input.length > base64Length(imageSizeLimit(match[1])) + 100) return '';
+    }
     return input;
   }
   try {

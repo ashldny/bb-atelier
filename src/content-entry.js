@@ -69,13 +69,7 @@ function start() {
         : ['font', 'courseCovers'].some((key) => key in changes);
     if (area === 'sync' && changes.masterEnabled?.newValue === true) sessionActive = true;
     if (area === 'local' && (changes.font || changes.courseCovers)) sessionActive = true;
-    if (
-      area === 'sync' &&
-      (PALETTE_KEYS.some((key) => key in changes) ||
-        (changes.bbTheme && changes.bbTheme.newValue?.engine !== changes.bbTheme.oldValue?.engine))
-    ) {
-      sessionActive = true;
-    }
+    if (area === 'sync' && PALETTE_KEYS.some((key) => key in changes)) sessionActive = true;
     if (relevant) scheduleRender();
   }
 
@@ -101,9 +95,8 @@ function start() {
   async function handle(message) {
     await ready;
     const action = message?.action || message?.type;
-    if (action === 'ping') return { success: true, enabled: enabled(), engine: theme.engine };
+    if (action === 'ping') return { success: true, enabled: enabled() };
     if (action === 'getCourses') return scrapeCourses();
-    if (action === 'getEngine') return { success: true, engine: theme.engine };
     if (action === 'auditTheme') return { success: true, enabled: enabled(), ...auditTheme() };
     if (action === 'previewThemeCSS') {
       if (typeof message.css !== 'string') throw new Error('Invalid theme CSS');
@@ -147,13 +140,6 @@ function start() {
         local.courseCovers[id] = entry;
       }
       covers.update(local.courseCovers, enabled());
-    } else if (['drApply', 'drEnable', 'drDisable', 'applyTheme'].includes(action)) {
-      sync.bbTheme = {
-        ...sync.bbTheme,
-        ...(message.theme || message.data || {}),
-        engine: action === 'drDisable' ? 'native' : message.engine || 'darkreader',
-      };
-      render();
     } else return { success: false, error: 'Unknown action' };
     return { success: true, disabled: !enabled() };
   }
@@ -161,7 +147,6 @@ function start() {
   const actions = new Set([
     'ping',
     'getCourses',
-    'getEngine',
     'auditTheme',
     'applyThemeCSS',
     'previewThemeCSS',
@@ -177,10 +162,6 @@ function start() {
     'disableAll',
     'refreshSettings',
     'BB_THEME_RESCAN',
-    'drApply',
-    'drEnable',
-    'drDisable',
-    'applyTheme',
   ]);
   chrome.runtime.onMessage.addListener((message, _sender, respond) => {
     if (!actions.has(message?.action || message?.type)) return false;

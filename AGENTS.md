@@ -8,7 +8,7 @@
 - Entry: `manifest.json` → `content.js` (Rollup IIFE from `src/content-entry.js`) at `document_start` + `popup.html`
 - Stack: Vanilla JS (ES Modules), Rollup, `chrome.storage` (sync + local), CSS Custom Properties, MutationObserver
 - Supported hosts: `elearning.qu.edu.qa`, `*.blackboard.com`, `*.ultra.blackboard.com`
-- Build: `npm run build` (rollup -c). **Never edit `content.js`/`content.js.map`/`darkreader.js` directly** — they are build artifacts.
+- Build: `npm run build` (rollup -c). **Never edit `content.js`/`content.js.map` directly** — they are build artifacts.
 
 ## 2. Coding Standards (Enforced)
 
@@ -57,7 +57,7 @@ Content must `sendResponse({ success: true })` and `return true`.
 
 - All user strings rendered in popup → `escapeHtml()` from `sanitization.js`.
 - URLs → allow only `http:`, `https:`, `data:`; reject `javascript:`.
-- Limits: fonts 512KB (`MAX_FONT_SIZE`), images 2MB (`MAX_IMAGE_SIZE`).
+- Limits: fonts 512KB (`MAX_FONT_SIZE`), images 2MB (`MAX_IMAGE_SIZE`), GIFs 8MB (`MAX_GIF_SIZE`, via `imageSizeLimit()`).
 - Font names → alphanumeric + spaces only.
 
 ## 6. Verification (Run Before Every Commit)
@@ -76,9 +76,9 @@ npm run lint           # eslint + web-ext lint — zero errors
 ```
 manifest.json              # MV3 manifest (permissions, host_permissions, CSP)
 popup.html / style.css     # Popup shell (420px, 3 tabs)
-src/content-entry.js       # Content script source (dual-engine stub)
+src/content-entry.js       # Content script source (native theme engine)
 src/popup/{popup,tabs,theme,savedThemes,courseCovers,coverCrop,customSelect,dialog,fonts,settings}.js
-src/theme/{presets,palette,cssBuilder,colorUtils,colorRemap}.js
+src/theme/{presets,palette,cssBuilder,colorUtils,colorRemap,themeOptions}.js
 src/content/{styles,theme,ruleRemapper,covers,fonts,streamIcons}.js
 src/messaging/themeMessaging.js
 src/utils/{constants,sanitization,ui,covers,fontCatalog}.js

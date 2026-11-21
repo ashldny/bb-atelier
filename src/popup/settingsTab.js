@@ -53,19 +53,6 @@ export function initSettingsTab(sync) {
   input.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') connectDomain();
   });
-  document.querySelectorAll('input[name="engine"]').forEach((radio) => {
-    radio.checked = radio.value === (sync.bbTheme?.engine || 'native');
-    radio.addEventListener('change', async () => {
-      if (!radio.checked) return;
-      try {
-        await updateOptions({ engine: radio.value });
-        await sendToTab({ action: 'refreshSettings' });
-        showToast(radio.value === 'native' ? 'Using native styling' : 'Using Dark Reader');
-      } catch {
-        showToast('Could not change the engine.', 'error');
-      }
-    });
-  });
   const autoApply = document.getElementById('autoApplyToggle');
   const toastToggle = document.getElementById('showToastToggle');
   autoApply.checked = sync.bbTheme?.autoApply !== false;
@@ -150,9 +137,6 @@ export function initSettingsTab(sync) {
     autoApply.checked = next.bbTheme?.autoApply !== false;
     toastToggle.checked = next.bbTheme?.showToast !== false;
     setToastPreference(toastToggle.checked);
-    document.querySelectorAll('input[name="engine"]').forEach((radio) => {
-      radio.checked = radio.value === (next.bbTheme?.engine || 'native');
-    });
     const toggle = document.getElementById('masterToggle');
     toggle.checked = next.masterEnabled !== false;
     document.getElementById('customizationControls').disabled = !toggle.checked;

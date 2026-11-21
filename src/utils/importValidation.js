@@ -2,7 +2,7 @@ import { DEFAULT_BG, DEFAULT_ACCENT } from '../utils/constants.js';
 import { isValidHex } from '../utils/ui.js';
 import { isValidFont, sanitizeUrl } from '../utils/sanitization.js';
 import { normalizePalette, paletteOf } from '../theme/settings.js';
-import { normalizeTheme } from '../theme/darkReaderTheme.js';
+import { normalizeTheme } from '../theme/themeOptions.js';
 import { normalizeCoverEntry } from '../utils/covers.js';
 
 const isRecord = (value) => value && typeof value === 'object' && !Array.isArray(value);

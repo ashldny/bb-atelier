@@ -20,8 +20,7 @@
     "no-implied-eval": "error"
   },
   "globals": {
-    "chrome": "readonly",
-    "DarkReader": "readonly"
+    "chrome": "readonly"
   },
-  "ignorePatterns": ["content.js", "content.js.map", "darkreader.js", "node_modules/", "Fonts/"]
+  "ignorePatterns": ["content.js", "content.js.map", "node_modules/", "Fonts/"]
 }

@@ -364,6 +364,7 @@
             ><button class="btn quiet" id="coverUrlBtn">Use a URL</button
             ><button class="btn quiet danger" id="removeCoverBtn">Remove</button>
           </div>
+          <p class="hint cover-hint">Tip: animated GIFs work too, up to 8 MB.</p>
           <div id="coverUrlInput" class="inline-form" hidden>
             <label class="field-label" for="coverUrlField">Image URL</label>
             <input type="url" id="coverUrlField" placeholder="https://example.com/image.jpg" />
@@ -385,6 +386,27 @@
             <button class="btn quiet" id="uploadLibraryBtn">Add images</button>
           </div>
           <div id="libraryGrid" class="library-grid"></div>
+          <div id="libraryPager" class="library-pager" hidden>
+            <button
+              class="icon-btn"
+              id="libraryPrevBtn"
+              type="button"
+              aria-label="Previous page"
+              title="Previous page"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+            </button>
+            <span id="libraryPageLabel" class="library-page-label" aria-live="polite"></span>
+            <button
+              class="icon-btn"
+              id="libraryNextBtn"
+              type="button"
+              aria-label="Next page"
+              title="Next page"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+            </button>
+          </div>
           <div class="button-row cover-cleanup">
             <button class="btn tiny danger" id="resetAllCoversBtn" type="button" disabled>
               Reset all covers</button
@@ -413,21 +435,6 @@
               >Show save confirmations</span
             ></label
           >
-        </section>
-        <section class="section">
-          <h2>Appearance engine</h2>
-          <div class="radio-group">
-            <label class="radio-row"
-              ><input type="radio" name="engine" value="native" checked /><span
-                >Native <small>Recommended</small></span
-              ></label
-            >
-            <label class="radio-row"
-              ><input type="radio" name="engine" value="darkreader" /><span
-                >Dark Reader</span
-              ></label
-            >
-          </div>
         </section>
         <section class="section">
           <h2>Backup</h2>
