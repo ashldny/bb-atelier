@@ -1501,13 +1501,6 @@ input[type='radio'] {
   font-size: 12.5px;
   line-height: 1.55;
 }
-.about-feedback {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 4px;
-  text-decoration: none;
-}
 
 /* Typography fits the popup without scrolling. */
 #sub-font .panel-heading {
@@ -1797,4 +1790,42 @@ input[type='range']:focus-visible {
   border-color: transparent;
   background: var(--accent-soft);
   color: var(--accent);
+}
+
+/* About: rate / feedback / share (ratePrompt.js) */
+.about-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+a.btn {
+  color: inherit;
+  text-decoration: none;
+}
+a.btn.primary {
+  color: #fff;
+}
+.about-share {
+  margin-top: 6px;
+  padding-left: 0;
+  padding-right: 0;
+}
+/* One-time rating nudge, shown above the tabs after a few days of use. */
+.rate-nudge {
+  margin: 12px 20px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--popup-border);
+  border-radius: 12px;
+  background: var(--accent-soft);
+  font-size: var(--text-label);
+  line-height: 1.5;
+}
+.rate-nudge-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.rate-nudge .btn {
+  min-height: 32px;
+  padding: 5px 12px;
 }

@@ -50,3 +50,8 @@ export function normalizeTextScale(value) {
   const steps = Math.round(1 / TEXT_SCALE.step);
   return Math.round(clamped * steps) / steps;
 }
+
+// Chrome Web Store listing (item kdamchficcbjbpjlkoikmjhgbhdfmmgi).
+export const STORE_URL =
+  'https://chromewebstore.google.com/detail/kdamchficcbjbpjlkoikmjhgbhdfmmgi';
+export const STORE_REVIEWS_URL = `${STORE_URL}/reviews`;

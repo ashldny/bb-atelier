@@ -4,6 +4,7 @@ import { initSaved } from './savedThemes.js';
 import { initGallery } from './gallery.js';
 import { initSystemScheme } from './systemScheme.js';
 import { initAbout } from './about.js';
+import { initRatePrompt } from './ratePrompt.js';
 import { initCourseCovers } from './courseCovers.js';
 import { initSettingsTab } from './settingsTab.js';
 import { initCoverageAudit } from './coverageAudit.js';
@@ -47,6 +48,7 @@ async function boot() {
     initSettingsTab(sync);
     initCoverageAudit();
     initAbout();
+    initRatePrompt().catch(() => {});
     // Course discovery runs on demand when its tab opens.
     await initCourseCovers();
     initTabs(local.activeTab || stored.activeTab);

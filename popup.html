@@ -109,6 +109,19 @@
     </p>
 
     <main>
+      <div class="rate-nudge" id="rateNudge" role="region" aria-label="Rate Bb Atelier" hidden>
+        <p>Enjoying Bb Atelier? A quick rating helps other students find it.</p>
+        <div class="rate-nudge-actions">
+          <a
+            class="btn primary"
+            id="rateNudgeLink"
+            href="#"
+            target="_blank"
+            rel="noopener"
+            >Rate it</a
+          ><button class="btn quiet" id="rateNudgeLater" type="button">Not now</button>
+        </div>
+      </div>
       <section class="tab-content active" data-tab="theme" id="tab-theme" role="tabpanel">
         <fieldset id="customizationControls" disabled>
           <legend class="sr-only">Theme customization</legend>
@@ -563,11 +576,22 @@
             more like my own space.
           </p>
           <p class="about-text">
-            It’s a side project, so ideas and bug reports really help. Spotted something off or want
-            a feature? Leave a review on the Chrome extensions page or send me a note!
+            It’s a side project, so ideas and bug reports really help. If you like it, a rating on
+            the Chrome Web Store helps other students find it. Spotted something off or want a
+            feature? Send me a note!
           </p>
-          <button class="btn primary about-feedback" id="feedbackBtn" type="button">
-            Send feedback
+          <div class="about-actions">
+            <a
+              class="btn primary"
+              id="rateStoreLink"
+              href="#"
+              target="_blank"
+              rel="noopener"
+              >Rate Bb Atelier</a
+            ><button class="btn secondary" id="feedbackBtn" type="button">Send feedback</button>
+          </div>
+          <button class="btn quiet about-share" id="shareStoreBtn" type="button">
+            Copy a link for classmates
           </button>
         </section>
       </section>

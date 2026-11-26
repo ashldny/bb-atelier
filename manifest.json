@@ -1,6 +1,7 @@
 {
-  "name": "Bb Atelier",
-  "description": "Personalize Blackboard Ultra with themes, fonts and course covers.",
+  "name": "Bb Atelier: Blackboard Dark Mode & Themes",
+  "short_name": "Bb Atelier",
+  "description": "Dark mode, color themes, fonts, text size and course covers for Blackboard Ultra. Use and share themes made by other students.",
   "version": "2.1",
   "manifest_version": 3,
   "permissions": ["activeTab", "storage", "unlimitedStorage", "scripting"],
