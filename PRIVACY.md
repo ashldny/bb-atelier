@@ -2,12 +2,14 @@
 
 _Last updated: 26 November 2026_
 
+This policy is also published at https://ashldny.github.io/bb-atelier/privacy.html
+
 Bb Atelier is a browser extension that changes how Blackboard Ultra looks: themes, fonts and course covers. It is built to work without collecting anything about you.
 
 ## The short version
 
 - Bb Atelier does not collect, sell or share personal data.
-- Everything you set up stays in your own browser.
+- Everything you set up stays in your own browser, unless you choose to share a theme.
 - It has no accounts, no analytics, no ads and no tracking.
 - Nothing leaves your browser unless you choose to: open the theme gallery, share a theme to it, or send a feedback note.
 
@@ -20,6 +22,7 @@ Bb Atelier saves these in your browser's extension storage (`chrome.storage`):
 - Course cover images you upload, with their crop and position
 - Any extra school addresses you connect
 - Your text size setting
+- A random ID for the theme gallery (see below)
 
 If you are signed in to Chrome with sync turned on, Chrome may sync some of these settings between your own devices. That is handled by Google, not by Bb Atelier. Large items such as images and fonts stay on the device where you added them.
 
@@ -27,7 +30,7 @@ You can delete all of it at any time by removing the extension, or by using **Re
 
 ## What Bb Atelier reads on Blackboard pages
 
-To restyle a page, Bb Atelier reads the page's own layout and stylesheets inside your browser. It does not read, store or send your courses, grades, messages, assignments or any other content, it does not record the pages you visit, and it makes no network requests of its own while restyling.
+To restyle a page, Bb Atelier reads the page's own layout and stylesheets inside your browser. On your Courses page it also reads course names and card images, only so you can choose which course gets a cover; they stay in your browser. It does not store or send your courses, grades, messages, assignments or any other content, it does not record the pages you visit, and it makes no network requests of its own while restyling.
 
 ## Theme gallery
 
