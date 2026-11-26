@@ -3,6 +3,7 @@ import { createStyleHost } from './content/styles.js';
 import { createThemeController } from './content/theme.js';
 import { createCoverController, scrapeCourses } from './content/covers.js';
 import { applyFont } from './content/fonts.js';
+import { applyTextScale } from './content/textScale.js';
 import { createIconFiller } from './content/streamIcons.js';
 import { auditTheme } from './content/themeAudit.js';
 import { DEFAULT_SETTINGS, PALETTE_KEYS } from './utils/constants.js';
@@ -35,6 +36,8 @@ function start() {
       applyFont(styles, font);
       lastFont = font;
     }
+    // Re-measured on every render: the site's root size is only final once its CSS loads.
+    applyTextScale(styles, enabled() ? local.textScale : 1);
     covers.update(local.courseCovers, enabled());
     icons.update(enabled());
     applied = true;
@@ -66,9 +69,10 @@ function start() {
     const relevant =
       area === 'sync'
         ? ['masterEnabled', 'bbTheme', ...PALETTE_KEYS].some((key) => key in changes)
-        : ['font', 'courseCovers'].some((key) => key in changes);
+        : ['font', 'textScale', 'courseCovers'].some((key) => key in changes);
     if (area === 'sync' && changes.masterEnabled?.newValue === true) sessionActive = true;
-    if (area === 'local' && (changes.font || changes.courseCovers)) sessionActive = true;
+    if (area === 'local' && (changes.font || changes.textScale || changes.courseCovers))
+      sessionActive = true;
     if (area === 'sync' && PALETTE_KEYS.some((key) => key in changes)) sessionActive = true;
     if (relevant) scheduleRender();
   }
@@ -76,7 +80,7 @@ function start() {
   const ready = (async () => {
     const [savedSync, savedLocal] = await Promise.all([
       chrome.storage.sync.get(['masterEnabled', 'bbTheme', ...PALETTE_KEYS]),
-      chrome.storage.local.get(['font', 'courseCovers']),
+      chrome.storage.local.get(['font', 'textScale', 'courseCovers']),
     ]);
     sync = { ...DEFAULT_SETTINGS, ...savedSync };
     local = savedLocal;

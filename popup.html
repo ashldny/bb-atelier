@@ -46,7 +46,7 @@
       <button
         class="tab-btn"
         data-tab="saved"
-        title="Saved"
+        title="Saved themes & gallery"
         role="tab"
         aria-selected="false"
         aria-controls="tab-saved"
@@ -257,7 +257,7 @@
               <!-- Catalog groups are inserted from src/utils/fontCatalog.js -->
               <select id="fontSelect" data-keep-open>
                 <option value="">Blackboard default</option>
-                <optgroup id="fontUploadGroup" label="Custom font" data-menu-skip hidden></optgroup>
+                <optgroup id="fontUploadGroup" label="Custom" hidden></optgroup>
                 <optgroup
                   id="fontLegacyGroup"
                   label="Earlier choice"
@@ -271,8 +271,25 @@
             </div>
             <div class="panel">
               <div class="panel-heading">
-                <span class="panel-title">Custom font</span>
+                <label class="panel-title" for="textScaleRange">Text size</label>
+                <span class="text-scale-value" id="textScaleValue" aria-hidden="true">100%</span>
+                <button class="btn tiny" id="resetTextScaleBtn" type="button">Reset</button>
               </div>
+              <div class="text-scale-row">
+                <span class="text-scale-glyph small" aria-hidden="true">A</span>
+                <input type="range" id="textScaleRange" min="85" max="130" step="5" value="100" />
+                <span class="text-scale-glyph large" aria-hidden="true">A</span>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-heading">
+                <span class="panel-title">Custom fonts</span>
+              </div>
+              <ul
+                class="custom-font-list"
+                id="customFontList"
+                aria-label="Your uploaded fonts"
+              ></ul>
               <div class="custom-font-row">
                 <span class="custom-font-name" id="customFontName">No custom font yet</span>
                 <button class="btn secondary" id="fontUploadBtn" type="button">Upload font</button>
@@ -285,30 +302,90 @@
       </section>
 
       <section class="tab-content" data-tab="saved" id="tab-saved" role="tabpanel" hidden>
-        <div class="section-heading">
-          <span class="list-count" id="savedCount"></span>
-          <button class="btn primary" id="saveCurrentBtn">Save current</button>
+        <div class="seg-nav" role="tablist" aria-label="Theme library">
+          <button
+            class="seg-btn library-btn active"
+            data-library="mine"
+            role="tab"
+            aria-selected="true"
+            aria-controls="library-mine"
+          >
+            My themes
+          </button>
+          <button
+            class="seg-btn library-btn"
+            data-library="gallery"
+            role="tab"
+            aria-selected="false"
+            aria-controls="library-gallery"
+            tabindex="-1"
+          >
+            Gallery
+          </button>
+          <span class="tab-indicator" aria-hidden="true"></span>
         </div>
-        <form id="saveThemeForm" class="inline-form" hidden>
-          <label class="field-label" for="saveThemeName">Theme name</label>
-          <input
-            id="saveThemeName"
-            type="text"
-            maxlength="40"
-            placeholder="My everyday theme"
-            required
-          />
-          <div class="button-row">
-            <button class="btn primary" type="submit">Save theme</button
-            ><button class="btn quiet" id="cancelSaveThemeBtn" type="button">Cancel</button>
+        <section class="library-panel active" data-library="mine" id="library-mine" role="tabpanel">
+          <div class="section-heading">
+            <span class="list-count" id="savedCount"></span>
+            <button class="btn primary" id="saveCurrentBtn">Save current</button>
           </div>
-        </form>
-        <div id="savedList"></div>
-        <div class="button-row centered transfer-actions">
-          <button class="btn secondary" id="exportThemesBtn">Export themes</button
-          ><button class="btn quiet" id="importThemesBtn">Import themes</button>
-        </div>
-        <input type="file" id="importThemesFile" accept=".json,application/json" hidden />
+          <form id="saveThemeForm" class="inline-form" hidden>
+            <label class="field-label" for="saveThemeName">Theme name</label>
+            <input
+              id="saveThemeName"
+              type="text"
+              maxlength="40"
+              placeholder="My everyday theme"
+              required
+            />
+            <div class="button-row">
+              <button class="btn primary" type="submit">Save theme</button
+              ><button class="btn quiet" id="cancelSaveThemeBtn" type="button">Cancel</button>
+            </div>
+          </form>
+          <div id="savedList"></div>
+          <div class="button-row centered transfer-actions">
+            <button class="btn secondary" id="exportThemesBtn">Export themes</button
+            ><button class="btn quiet" id="importThemesBtn">Import themes</button>
+          </div>
+          <input type="file" id="importThemesFile" accept=".json,application/json" hidden />
+        </section>
+        <section
+          class="library-panel"
+          data-library="gallery"
+          id="library-gallery"
+          role="tabpanel"
+          hidden
+        >
+          <div class="section-heading gallery-toolbar">
+            <div class="chip-group" role="group" aria-label="Sort gallery">
+              <button class="chip active" data-sort="popular" type="button" aria-pressed="true">
+                Popular</button
+              ><button class="chip" data-sort="new" type="button" aria-pressed="false">New</button>
+            </div>
+            <button
+              class="icon-btn"
+              id="galleryRefreshBtn"
+              type="button"
+              aria-label="Refresh gallery"
+              title="Refresh gallery"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" />
+              </svg>
+            </button>
+          </div>
+          <p class="hint gallery-hint">
+            Use themes shared by others! Share yours with the
+            <svg class="hint-icon" viewBox="0 0 24 24" role="img" aria-label="share">
+              <path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13" /></svg
+            >button in My themes.
+          </p>
+          <div id="galleryList" aria-live="polite" aria-busy="false"></div>
+          <div class="button-row centered">
+            <button class="btn quiet" id="galleryMoreBtn" type="button" hidden>Show more</button>
+          </div>
+        </section>
       </section>
 
       <section class="tab-content" data-tab="covers" id="tab-covers" role="tabpanel" hidden>
@@ -329,9 +406,12 @@
             </svg>
           </button>
         </div>
-        <p id="coursesEmpty" class="hint" hidden>
-          Open your Courses page in Blackboard to choose a course, then refresh.
-        </p>
+        <div id="coursesEmpty" class="courses-empty" role="status" hidden>
+          <p id="coursesEmptyText"></p>
+          <button class="btn secondary" id="openCoursesBtn" type="button" hidden>
+            Go to Courses
+          </button>
+        </div>
         <fieldset id="coverEditor" disabled>
           <legend class="sr-only">Edit course cover</legend>
           <!-- Whole image with the course banner's frame on top (coverCrop.js) -->
@@ -531,6 +611,36 @@
         <div class="modal-actions">
           <button class="btn quiet" id="feedbackCancel" type="button">Cancel</button
           ><button class="btn primary" id="feedbackSend" type="submit">Send</button>
+        </div>
+      </form>
+    </div>
+    <div class="modal-backdrop" id="shareDialog" hidden>
+      <form
+        class="modal share-modal"
+        id="shareForm"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shareTitle"
+        aria-describedby="shareNote"
+        novalidate
+      >
+        <h2 id="shareTitle">Share to the gallery</h2>
+        <div class="share-preview" id="sharePreview" aria-hidden="true"></div>
+        <p class="share-font" id="shareFont"></p>
+        <label class="field-label" for="shareName">Theme name</label>
+        <input id="shareName" type="text" maxlength="40" required />
+        <label class="field-label" for="shareAuthor"
+          >Your name <span class="optional">(optional)</span></label
+        >
+        <input id="shareAuthor" type="text" maxlength="30" placeholder="Shown as “by …”" />
+        <p id="shareNote" class="share-note">
+          Shared themes are public. Only the colors, the font and the names above are sent. You can
+          remove it from the gallery later.
+        </p>
+        <p class="feedback-status" id="shareStatus" role="status"></p>
+        <div class="modal-actions">
+          <button class="btn quiet" id="shareCancel" type="button">Cancel</button
+          ><button class="btn primary" id="shareSend" type="submit">Share</button>
         </div>
       </form>
     </div>

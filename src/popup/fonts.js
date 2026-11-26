@@ -2,6 +2,12 @@ import { showToast } from '../utils/ui.js';
 import { isValidFont, MAX_FONT_SIZE, validateFileSize, cssUrl } from '../utils/sanitization.js';
 import { syncSelect } from './customSelect.js';
 import { FONT_GROUPS, fontFiles, fontStack } from '../utils/fontCatalog.js';
+import { addCustomFont, customFontName, normalizeCustomFonts } from '../utils/customFonts.js';
+import { escapeHtml } from '../utils/sanitization.js';
+
+// Uploaded fonts (local.customFonts), cached so restoreFontControl stays synchronous.
+let customFonts = [];
+const customFamily = (index) => `BbCustomFont${index}`;
 
 export function updateFontPreviewLive(font = '') {
   const preview = document.getElementById('fontPreview');
@@ -40,50 +46,95 @@ function renderFontOptions() {
   document.head.appendChild(style);
 }
 
+// Each uploaded font gets its own @font-face so the menu and the chips preview in it.
+function renderCustomFaces() {
+  document.getElementById('bb-custom-faces')?.remove();
+  if (!customFonts.length) return;
+  const style = document.createElement('style');
+  style.id = 'bb-custom-faces';
+  style.textContent = customFonts
+    .map(
+      ({ font }, index) =>
+        `@font-face{font-family:'${customFamily(index)}';src:${cssUrl(font)};font-display:swap;}`
+    )
+    .join('');
+  document.head.appendChild(style);
+}
+
+function renderCustomChips(current) {
+  const list = document.getElementById('customFontList');
+  list.innerHTML = customFonts
+    .map(
+      ({ name }, index) =>
+        `<li><button class="custom-font-chip" type="button" data-index="${index}" aria-pressed="false" style="font-family:'${customFamily(index)}', sans-serif" title="Use ${escapeHtml(name)}">${escapeHtml(name)}</button></li>`
+    )
+    .join('');
+  list.querySelectorAll('.custom-font-chip').forEach((chip) => {
+    chip.setAttribute(
+      'aria-pressed',
+      String(customFonts[Number(chip.dataset.index)].font === current)
+    );
+  });
+}
+
 export function restoreFontControl(local = {}) {
   const select = document.getElementById('fontSelect');
   const group = document.getElementById('fontUploadGroup');
   const customName = document.getElementById('customFontName');
   const legacy = document.getElementById('fontLegacyGroup');
-  group.replaceChildren();
-  legacy.replaceChildren();
-  const custom = local.font?.startsWith('data:') && isValidFont(local.font);
-  if (custom) {
-    const name = local.fontName || 'Uploaded font';
-    group.appendChild(new Option(`Custom · ${name}`, local.font));
-    group.hidden = false;
-    customName.textContent = name;
-  } else {
-    group.hidden = true;
-    customName.textContent = 'No custom font yet';
-  }
-  customName.classList.toggle('active', custom);
-  // A font from an older version stays selected even though it is no longer offered.
   const font = local.font || '';
-  if (font && !custom && ![...select.options].some((option) => option.value === font))
+  // A font applied from a saved theme or backup joins the list, so it can be chosen again.
+  if (font.startsWith('data:') && isValidFont(font) && !customFontName(customFonts, font)) {
+    customFonts = addCustomFont(customFonts, local.fontName || 'Uploaded font', font);
+    chrome.storage.local.set({ customFonts }).catch(() => {});
+    renderCustomFaces();
+  }
+  group.replaceChildren(
+    ...customFonts.map(({ name, font: value }, index) => {
+      const option = new Option(name, value);
+      option.style.fontFamily = `'${customFamily(index)}', sans-serif`;
+      return option;
+    })
+  );
+  group.hidden = !customFonts.length;
+  legacy.replaceChildren();
+  customName.hidden = customFonts.length > 0;
+  customName.textContent = 'No custom font yet';
+  renderCustomChips(font);
+  // A font from an older version stays selected even though it is no longer offered.
+  if (font && ![...select.options].some((option) => option.value === font))
     legacy.appendChild(new Option(font, font));
   select.value = font;
   syncSelect(select);
-  updateFontPreviewLive(local.font);
+  updateFontPreviewLive(font);
+}
+
+async function chooseFont(font) {
+  try {
+    if (!isValidFont(font)) throw new Error('Invalid font');
+    const fontName = font.startsWith('data:')
+      ? customFontName(customFonts, font) || 'Uploaded font'
+      : font;
+    await chrome.storage.local.set({ font, fontName });
+    restoreFontControl({ font, fontName });
+    document.dispatchEvent(new Event('bb-status-change'));
+  } catch {
+    showToast('Could not save the font. Try again.', 'error');
+  }
 }
 
 export function initFonts(local) {
+  customFonts = normalizeCustomFonts(local.customFonts);
   renderFontOptions();
+  renderCustomFaces();
   restoreFontControl(local);
   const upload = document.getElementById('fontUpload');
-  document.getElementById('fontSelect').addEventListener('change', async (event) => {
-    try {
-      const font = event.target.value;
-      if (!isValidFont(font)) throw new Error('Invalid font');
-      await chrome.storage.local.set({ font, fontName: font });
-      updateFontPreviewLive(font);
-      document
-        .getElementById('customFontName')
-        .classList.toggle('active', font.startsWith('data:'));
-      document.dispatchEvent(new Event('bb-status-change'));
-    } catch {
-      showToast('Could not save the font. Try again.', 'error');
-    }
+  document
+    .getElementById('fontSelect')
+    .addEventListener('change', (event) => chooseFont(event.target.value));
+  document.getElementById('customFontList').addEventListener('click', (event) => {
+    const chip = event.target.closest('.custom-font-chip');
+    if (chip) chooseFont(customFonts[Number(chip.dataset.index)]?.font);
   });
   document.getElementById('fontUploadBtn').addEventListener('click', () => upload.click());
   upload.addEventListener('change', async () => {
@@ -104,7 +155,9 @@ export function initFonts(local) {
         reader.readAsDataURL(file);
       });
       if (!isValidFont(font)) throw new Error('Invalid font file');
-      await chrome.storage.local.set({ font, fontName: file.name });
+      customFonts = addCustomFont(customFonts, file.name, font);
+      await chrome.storage.local.set({ font, fontName: file.name, customFonts });
+      renderCustomFaces();
       restoreFontControl({ font, fontName: file.name });
       document.dispatchEvent(new Event('bb-status-change'));
       showToast('Font saved');

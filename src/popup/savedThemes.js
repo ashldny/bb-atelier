@@ -1,24 +1,15 @@
 import { applyCurrentTheme, readPalette, setPaletteInputs } from './theme.js';
 import { restoreFontControl } from './fonts.js';
-import { derivePalette } from '../theme/palette.js';
-import { sidebarShade } from '../theme/colorUtils.js';
-import { previewThemeOnBb, restoreThemeOnBb } from '../messaging/themeMessaging.js';
+import { restoreThemeOnBb } from '../messaging/themeMessaging.js';
 import { escapeHtml, validateFileSize } from '../utils/sanitization.js';
-import { showToast, debounce } from '../utils/ui.js';
+import { showToast } from '../utils/ui.js';
 import { updateStored } from '../utils/storage.js';
 import { validateSavedTheme, validateThemeCollection } from '../utils/importValidation.js';
 import { downloadJson } from '../utils/files.js';
 import { confirmDialog } from './dialog.js';
-
-const preview = debounce((theme) => {
-  const { overrides, darkOverrides, staticVars } = derivePalette(
-    theme.pageBg,
-    theme.accent,
-    theme.navbar,
-    theme.pageText
-  );
-  previewThemeOnBb(overrides, darkOverrides, staticVars);
-}, 150);
+import { bindHoverPreview, cancelPreview } from './themePreview.js';
+import { paletteSwatches } from './swatchMarkup.js';
+import { openShareDialog } from './shareTheme.js';
 
 export function uniqueName(name, existing) {
   if (!Object.hasOwn(existing, name)) return name;
@@ -117,9 +108,10 @@ export async function renderSaved() {
     .map(
       ([name, theme]) => `<div class="saved-row" data-name="${escapeHtml(name)}">
     <button class="load-saved" type="button" aria-label="Apply ${escapeHtml(name)}">
-      <span class="saved-swatches" aria-hidden="true">${[theme.pageBg, theme.navbar || sidebarShade(theme.pageBg), theme.accent].map((color) => `<span class="mini-swatch" style="background:${escapeHtml(color)}"></span>`).join('')}</span>
+      ${paletteSwatches(theme)}
       <span class="saved-name">${escapeHtml(name)}</span>
     </button>
+    <button class="row-icon share-saved" type="button" aria-label="Share ${escapeHtml(name)} to the gallery" title="Share to gallery"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13"/></svg></button>
     <button class="row-icon edit-saved" type="button" aria-label="Edit ${escapeHtml(name)}" title="Edit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
     <button class="row-icon danger delete-saved" type="button" aria-label="Delete ${escapeHtml(name)}" title="Delete"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
   </div>`
@@ -128,15 +120,13 @@ export async function renderSaved() {
   list.querySelectorAll('.saved-row').forEach((row) => {
     const name = row.dataset.name;
     const theme = savedThemes[name];
-    row.addEventListener('mouseenter', () => {
-      if (document.getElementById('masterToggle').checked) preview(theme);
-    });
-    row.addEventListener('mouseleave', () => {
-      preview.cancel();
-      restoreThemeOnBb();
+    bindHoverPreview(row, theme);
+    row.querySelector('.share-saved').addEventListener('click', () => {
+      cancelPreview();
+      openShareDialog(name, theme);
     });
     row.querySelector('.load-saved').addEventListener('click', async () => {
-      preview.cancel();
+      cancelPreview();
       await applyCurrentTheme(theme);
       if (theme.font)
         await chrome.storage.local.set({
@@ -148,14 +138,14 @@ export async function renderSaved() {
       showToast(`Applied “${name}”`);
     });
     row.querySelector('.edit-saved').addEventListener('click', () => {
-      preview.cancel();
+      cancelPreview();
       setPaletteInputs(theme);
       document.querySelector('.tab-btn[data-tab="theme"]').click();
       document.querySelector('.sub-tab-btn[data-subtab="colors"]').click();
       restoreThemeOnBb();
     });
     row.querySelector('.delete-saved').addEventListener('click', async () => {
-      preview.cancel();
+      cancelPreview();
       restoreThemeOnBb();
       const confirmed = await confirmDialog({
         title: 'Delete this theme?',

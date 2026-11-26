@@ -1,6 +1,6 @@
-import { normalizeCoverEntry } from '../utils/covers.js';
+import { normalizeCoverEntry, shortCourseNames } from '../utils/covers.js';
 import { sanitizeUrl } from '../utils/sanitization.js';
-import { sendToTab } from '../messaging/themeMessaging.js';
+import { getTargetTab, openCoursesPage, sendToTab } from '../messaging/themeMessaging.js';
 import { updateStored } from '../utils/storage.js';
 import { showToast, debounce } from '../utils/ui.js';
 import { initCoverLibrary, readImage, addToLibrary } from './coverLibrary.js';
@@ -67,34 +67,69 @@ export async function initCourseCovers() {
 
   initCoverLibrary(() => currentId, saveCover);
 
+  const emptyText = document.getElementById('coursesEmptyText');
+  const openCourses = document.getElementById('openCoursesBtn');
+
+  // Courses can only be read from Blackboard's Courses page, so everywhere else the menu
+  // stays locked and the hint says where to go.
+  function showEmpty(state) {
+    empty.hidden = state === 'ready';
+    openCourses.hidden = state !== 'elsewhere';
+    emptyText.textContent =
+      state === 'no-blackboard'
+        ? 'Open Blackboard in this tab to choose a course.'
+        : state === 'loading'
+          ? 'Looking for your courses…'
+          : 'Course covers are set from your Courses page in card view. Go there, then pick a course.';
+  }
+
   async function refreshCourses() {
     const token = ++request;
     const button = document.getElementById('refreshCoursesBtn');
     button.disabled = true;
-    const courses = await sendToTab({ action: 'getCourses' }, { quiet: true });
-    if (token !== request) return;
-    button.disabled = false;
+    const tab = await getTargetTab();
+    const courses = tab ? await sendToTab({ action: 'getCourses' }, { quiet: true }) : null;
+    if (token !== request) return false;
+    button.disabled = !tab;
     const placeholder = new Option('Select a course…', '');
     placeholder.dataset.placeholder = '';
     select.replaceChildren(placeholder);
     bannerAspects.clear();
-    if (Array.isArray(courses))
-      for (const course of courses) {
-        if (typeof course.id !== 'string' || typeof course.name !== 'string') continue;
-        select.add(new Option(course.name, course.id));
-        const aspect = Number(course.aspect);
-        if (aspect >= 1 && aspect <= 8) bannerAspects.set(course.id, aspect);
-      }
-    // Courses can only be read from Blackboard's course list, so lock the menu elsewhere.
+    const valid = Array.isArray(courses)
+      ? courses.filter((course) => typeof course.id === 'string' && typeof course.name === 'string')
+      : [];
+    const names = shortCourseNames(valid);
+    valid.forEach((course, index) => {
+      const option = new Option(names[index], course.id);
+      option.title = course.name;
+      select.add(option);
+      const aspect = Number(course.aspect);
+      if (aspect >= 1 && aspect <= 8) bannerAspects.set(course.id, aspect);
+    });
     const found = select.options.length > 1;
-    empty.hidden = found;
+    showEmpty(found ? 'ready' : tab ? 'elsewhere' : 'no-blackboard');
     select.disabled = !found;
-    placeholder.textContent = found ? 'Select a course…' : 'Open your Courses page first';
+    placeholder.textContent = found
+      ? 'Select a course…'
+      : tab
+        ? 'Go to your Courses page first'
+        : 'Open Blackboard first';
     if ([...select.options].some((option) => option.value === currentId)) select.value = currentId;
     else currentId = '';
     syncSelect(select);
     render();
+    return found;
   }
+
+  // Blackboard draws course cards a moment after the page loads, so keep asking briefly.
+  openCourses.addEventListener('click', async () => {
+    if (!(await openCoursesPage())) return showEmpty('no-blackboard');
+    showEmpty('loading');
+    for (let attempt = 0; attempt < 12; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (await refreshCourses()) return;
+    }
+  });
   document.getElementById('refreshCoursesBtn').addEventListener('click', refreshCourses);
   document.addEventListener('bb-tab-change', (event) => {
     if (event.detail.group === 'tab' && event.detail.value === 'covers') refreshCourses();

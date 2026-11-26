@@ -71,3 +71,15 @@ export function applyFont(font) {
 export function resetFontOnBb() {
   return applyFont('');
 }
+
+const COURSES_PATH = '/ultra/course';
+
+/** Sends the connected Blackboard tab to its Courses page. Returns false when there is none. */
+export async function openCoursesPage() {
+  const tab = await getTargetTab();
+  if (!tab) return false;
+  const url = new URL(tab.url);
+  if (url.pathname.replace(/\/$/, '') !== COURSES_PATH)
+    await chrome.tabs.update(tab.id, { url: `${url.origin}${COURSES_PATH}` });
+  return true;
+}

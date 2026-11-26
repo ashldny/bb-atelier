@@ -68,3 +68,28 @@ export function normalizeCoverEntry(entry) {
   if (crop) normalized.crop = crop;
   return normalized;
 }
+
+// "(Fall_2026_CMAI480_16504_L52) Computer Vision L52" → "Computer Vision": drop the leading
+// course code in brackets and a trailing section code (L52, B51, …).
+const COURSE_CODE = /^\s*\([^)]*\)\s*/;
+const SECTION = /\s+[A-Z]{1,2}\d{1,3}\s*$/;
+
+export function shortCourseName(name) {
+  const full = String(name || '').trim();
+  const short = full.replace(COURSE_CODE, '').replace(SECTION, '').trim();
+  return short || full;
+}
+
+/** Short names for a course list; two sections of one course keep their section code. */
+export function shortCourseNames(courses) {
+  const counts = new Map();
+  const shorts = courses.map((course) => shortCourseName(course.name));
+  shorts.forEach((name) => counts.set(name, (counts.get(name) || 0) + 1));
+  return shorts.map((name, index) => {
+    if (counts.get(name) === 1) return name;
+    const full = String(courses[index].name || '')
+      .replace(COURSE_CODE, '')
+      .trim();
+    return full || name;
+  });
+}

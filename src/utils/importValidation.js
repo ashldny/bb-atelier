@@ -1,9 +1,10 @@
-import { DEFAULT_BG, DEFAULT_ACCENT } from '../utils/constants.js';
+import { DEFAULT_BG, DEFAULT_ACCENT, normalizeTextScale } from '../utils/constants.js';
 import { isValidHex } from '../utils/ui.js';
 import { isValidFont, sanitizeUrl } from '../utils/sanitization.js';
 import { normalizePalette, paletteOf } from '../theme/settings.js';
 import { normalizeTheme } from '../theme/themeOptions.js';
 import { normalizeCoverEntry } from '../utils/covers.js';
+import { normalizeCustomFonts } from '../utils/customFonts.js';
 
 const isRecord = (value) => value && typeof value === 'object' && !Array.isArray(value);
 
@@ -58,6 +59,14 @@ export function validateSettingsImport(raw) {
     local.font = data.font;
     local.fontName =
       typeof data.fontName === 'string' ? data.fontName.slice(0, 200) : 'Uploaded font';
+  }
+  if (data.customFonts != null) {
+    if (!Array.isArray(data.customFonts)) throw new Error('Invalid custom fonts in backup');
+    local.customFonts = normalizeCustomFonts(data.customFonts);
+  }
+  if (data.textScale != null) {
+    const scale = normalizeTextScale(data.textScale);
+    if (scale !== 1) local.textScale = scale;
   }
   const saved = data.savedThemes || source.savedThemes;
   if (saved) {

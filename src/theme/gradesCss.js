@@ -16,6 +16,7 @@
 //    • .zoom-button-group — chart + / − zoom buttons
 //    • .telemetry-panel .fs-table — chart table view
 //    • .customGradePill — coloured score pills
+//    • svg.js-complete-pill-icon / .js-incomplete-pill-icon — graded / not-yet icons
 //    • [data-analytics-id="course.gradebook.student.grade.studentTabs"] — gradebook tabs
 // ═════════════════════════════════════════════════════════
 
@@ -108,6 +109,12 @@ ${CHART} .highcharts-tooltip span {
 /* Grade pills keep their status colour, so their score stays dark ink. */
 .customGradePill,
 .customGradePill * {
+  color: #1c1c1c !important;
+}
+/* The check / not-yet icons in complete-incomplete pills: Blackboard draws them
+   black on the pill colour. Tier 3 turns that black into page text, which goes light
+   in dark themes, so pin the ink like the scores above, in every mode. */
+svg[class*="-pill-icon"] {
   color: #1c1c1c !important;
 }
 

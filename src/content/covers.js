@@ -19,18 +19,21 @@ function containingCourse(element) {
   return card;
 }
 
+// Only course cards carry a banner, and covers only ever paint banners. Reading banners
+// (not every card-like element) keeps activity-stream posts and forms out of the list.
 export function scrapeCourses() {
   const courses = new Map();
-  document.querySelectorAll(CARD).forEach((card) => {
-    const id = courseId(card);
+  document.querySelectorAll(BANNER).forEach((banner) => {
+    const card = containingCourse(banner);
+    const id = card && courseId(card);
     if (!id || courses.has(id)) return;
     const name = card.querySelector(
       '.course-title, .js-course-title-element, h4, [class*="title"]'
     )?.textContent;
     // Banner shape lets the popup draw a crop frame that matches this page's cards.
-    const box = card.querySelector(BANNER)?.getBoundingClientRect();
+    const box = banner.getBoundingClientRect();
     const aspect =
-      box?.width && box?.height ? Math.round((box.width / box.height) * 100) / 100 : null;
+      box.width && box.height ? Math.round((box.width / box.height) * 100) / 100 : null;
     courses.set(id, {
       id,
       name: name?.trim().replace(/\s+/g, ' ').slice(0, 120) || id,

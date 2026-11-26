@@ -77,11 +77,12 @@ npm run lint           # eslint + web-ext lint — zero errors
 manifest.json              # MV3 manifest (permissions, host_permissions, CSP)
 popup.html / style.css     # Popup shell (420px, 3 tabs)
 src/content-entry.js       # Content script source (native theme engine)
-src/popup/{popup,tabs,theme,savedThemes,courseCovers,coverCrop,customSelect,dialog,fonts,settings}.js
-src/theme/{presets,palette,cssBuilder,colorUtils,colorRemap,themeOptions}.js
-src/content/{styles,theme,ruleRemapper,covers,fonts,streamIcons}.js
-src/messaging/themeMessaging.js
-src/utils/{constants,sanitization,ui,covers,fontCatalog}.js
+src/popup/{popup,tabs,theme,savedThemes,gallery,shareTheme,themePreview,swatchMarkup,logoLoader,courseCovers,coverCrop,customSelect,dialog,fonts,textScale,settings}.js
+src/theme/{presets,palette,cssBuilder,colorUtils,colorRemap,themeOptions,gradesCss,courseChromeCss,panelsCss,controlsCss}.js
+src/content/{styles,theme,ruleRemapper,covers,fonts,textScale,streamIcons}.js
+src/messaging/{themeMessaging,galleryApi}.js   # galleryApi = the only module that calls the gallery backend
+src/utils/{constants,sanitization,ui,covers,customFonts,fontCatalog,galleryConfig}.js
+supabase/migrations/       # Theme gallery schema (anon may only call gallery_* functions)
 Fonts/ / icons/            # Static assets (do not edit without design review)
 ```
 

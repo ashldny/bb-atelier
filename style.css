@@ -31,6 +31,9 @@
   --popup-text-muted: #bcb3ba;
   --danger: #f5a1aa;
   --success: #93cba6;
+  /* One size for labels and the values people type or pick, so fields read as one set. */
+  --text-label: 13px;
+  --text-field: 14px;
   font-family:
     'Montserrat',
     -apple-system,
@@ -238,9 +241,12 @@ h1 {
   overflow: hidden;
   border-radius: 22px /* concentric with the nav: 27px - 5px padding */;
   background:
-    radial-gradient(120% 90% at 50% 120%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%),
-    linear-gradient(180deg, #ffffff0d, transparent 45%),
-    var(--popup-raised);
+    radial-gradient(
+      120% 90% at 50% 120%,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(180deg, #ffffff0d, transparent 45%), var(--popup-raised);
   box-shadow:
     inset 0 1px 0 #ffffff1c,
     inset 0 -1px 0 color-mix(in srgb, var(--accent) 20%, transparent);
@@ -255,8 +261,16 @@ h1 {
   background:
     radial-gradient(closest-side, color-mix(in srgb, var(--accent) 80%, #fff) 0%, transparent 50%)
       center / 46px 46px no-repeat,
-    radial-gradient(42% 6% at 50% 50%, color-mix(in srgb, var(--accent) 50%, transparent), transparent 100%),
-    radial-gradient(60% 60% at 50% 50%, color-mix(in srgb, var(--accent) 35%, transparent), transparent 70%);
+    radial-gradient(
+      42% 6% at 50% 50%,
+      color-mix(in srgb, var(--accent) 50%, transparent),
+      transparent 100%
+    ),
+    radial-gradient(
+      60% 60% at 50% 50%,
+      color-mix(in srgb, var(--accent) 35%, transparent),
+      transparent 70%
+    );
   filter: blur(11px) saturate(1.1);
   opacity: 0.38;
   mix-blend-mode: screen;
@@ -341,11 +355,14 @@ main {
   scrollbar-width: thin;
   scrollbar-color: #505057 transparent;
 }
-/* Covers tab: still scrolls with wheel/trackpad, but without a visible scrollbar. */
-main:has(#tab-covers:not([hidden])) {
+/* Covers tab and Typography: still scroll with wheel/trackpad, but without a visible
+   scrollbar. */
+main:has(#tab-covers:not([hidden])),
+main:has(#tab-theme:not([hidden]) #sub-font:not([hidden])) {
   scrollbar-width: none;
 }
-main:has(#tab-covers:not([hidden]))::-webkit-scrollbar {
+main:has(#tab-covers:not([hidden]))::-webkit-scrollbar,
+main:has(#tab-theme:not([hidden]) #sub-font:not([hidden]))::-webkit-scrollbar {
   display: none;
 }
 .tab-content {
@@ -623,7 +640,7 @@ input[type='color']::-webkit-color-swatch {
 .field-label {
   display: block;
   margin: 14px 0 6px;
-  font-size: 12.5px;
+  font-size: var(--text-label);
   font-weight: 600;
 }
 input[type='text'],
@@ -636,6 +653,8 @@ textarea {
   border: 1px solid var(--popup-border);
   border-radius: 7px;
   background: var(--popup-surface);
+  font-size: var(--text-field);
+  font-weight: 500;
 }
 input[type='text']:focus,
 input[type='url']:focus,
@@ -654,11 +673,36 @@ textarea::placeholder {
   flex: 1;
   min-width: 0;
 }
-.select-native {
+/* Stays invisible when disabled too: the global select:disabled opacity would show it
+   through the trigger as doubled text. */
+.select-native,
+.select-native:disabled {
   position: absolute;
   inset: 0;
   opacity: 0;
   pointer-events: none;
+}
+.select-trigger:disabled {
+  cursor: not-allowed;
+}
+.courses-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--popup-border);
+  border-radius: 9px;
+  background: var(--popup-surface);
+  color: var(--popup-text-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.courses-empty p {
+  flex: 1;
+}
+.courses-empty .btn {
+  flex-shrink: 0;
 }
 .select-trigger {
   display: flex;
@@ -689,6 +733,8 @@ textarea::placeholder {
   color: var(--popup-text-muted);
 }
 .select-value {
+  font-size: var(--text-field);
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -758,6 +804,7 @@ textarea::placeholder {
 }
 .select-option {
   position: relative;
+  font-size: var(--text-field);
   padding: 7px 28px 7px 9px;
   border-radius: 6px;
   cursor: pointer;
@@ -767,7 +814,6 @@ textarea::placeholder {
 }
 .select-option.in-group {
   padding-left: 16px;
-  font-size: 13.5px;
 }
 .select-option.highlighted {
   background: #ffffff12;
@@ -836,7 +882,7 @@ textarea::placeholder {
 }
 .panel-title {
   display: block;
-  font-size: 12.5px;
+  font-size: var(--text-label);
   font-weight: 600;
 }
 .font-preview {
@@ -864,7 +910,7 @@ textarea::placeholder {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--popup-text-muted);
-  font-size: 12.5px;
+  font-size: var(--text-field);
 }
 .custom-font-name.active {
   color: var(--popup-text);
@@ -1057,6 +1103,8 @@ textarea::placeholder {
   margin-left: -2px;
 }
 .saved-name {
+  font-size: var(--text-field);
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1466,10 +1514,64 @@ input[type='radio'] {
   margin-bottom: 6px;
 }
 #sub-font .font-preview {
-  padding-top: 10px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--popup-surface);
+}
+.text-scale-value {
+  margin-left: auto;
+  margin-right: 4px;
+  color: var(--popup-text-muted);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
+}
+.text-scale-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 32px;
+}
+.text-scale-glyph {
+  flex-shrink: 0;
+  color: var(--popup-text-muted);
+  font-weight: 600;
+  line-height: 1;
+}
+.text-scale-glyph.small {
+  font-size: 12px;
+}
+.text-scale-glyph.large {
+  font-size: 19px;
+}
+input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  margin: 0;
+  appearance: none;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent) var(--fill, 33%),
+    var(--popup-border) var(--fill, 33%)
+  );
+  cursor: pointer;
+}
+input[type='range']::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  appearance: none;
+  border: 2px solid var(--popup-bg);
+  border-radius: 50%;
+  background: var(--popup-text);
+  box-shadow: 0 0 0 1px var(--popup-border);
+}
+input[type='range']:focus-visible {
+  outline-offset: 6px;
 }
 #sub-font .font-preview > span {
-  font-size: 30px;
+  font-size: 28px;
 }
 #sub-font .fine-print {
   margin-top: 6px;
@@ -1499,11 +1601,200 @@ input[type='radio'] {
 /* Typography: open sections instead of boxed panels. */
 #sub-font .panel {
   padding: 0;
-  margin-bottom: 22px;
+  margin: 0;
   border: 0;
+  border-radius: 0;
   background: none;
+}
+/* Typeface / Text size / Custom fonts: three sections split by a hairline with room
+   on both sides, so each reads as its own group without boxing the page in. */
+#sub-font .panel + .panel {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--popup-border);
 }
 .cover-cleanup {
   justify-content: flex-end;
   margin-top: 10px;
+}
+
+/* Saved tab → Gallery (gallery.js, shareTheme.js) */
+.gallery-toolbar {
+  margin-bottom: 4px;
+}
+.chip-group {
+  display: flex;
+  gap: 6px;
+}
+.chip {
+  min-height: 30px;
+  padding: 4px 12px;
+  border: 1px solid var(--popup-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--popup-text-muted);
+  font-size: var(--text-label);
+  font-weight: 600;
+}
+.chip:hover {
+  color: var(--popup-text);
+}
+.chip.active {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.gallery-toolbar .icon-btn {
+  width: 34px;
+  height: 34px;
+}
+.gallery-hint {
+  margin: 8px 0 10px;
+}
+.gallery-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+.gallery-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--popup-text-muted);
+  font-size: 12px;
+}
+.share-modal {
+  max-width: 340px;
+}
+.share-modal .field-label {
+  margin-top: 12px;
+}
+.share-modal .optional {
+  color: var(--popup-text-muted);
+  font-weight: 400;
+}
+.share-preview {
+  display: flex;
+  margin-top: 12px;
+  padding-left: 2px;
+}
+.share-preview .mini-swatch {
+  width: 22px;
+  height: 28px;
+}
+.modal .share-note {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Logo loader (logoLoader.js): the mark's "b" drawn stroke by stroke. */
+.logo-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 0;
+  color: var(--popup-text-muted);
+  font-size: var(--text-label);
+}
+.logo-loader svg {
+  width: 44px;
+  height: 44px;
+  overflow: visible;
+}
+.logo-loader :is(line, circle) {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 11;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.logo-loader .logo-stem {
+  animation: logo-stem 1.8s cubic-bezier(0.6, 0, 0.3, 1) infinite;
+}
+.logo-loader .logo-bowl {
+  animation: logo-bowl 1.8s cubic-bezier(0.6, 0, 0.3, 1) infinite;
+}
+@keyframes logo-stem {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  30%,
+  80% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+@keyframes logo-bowl {
+  0%,
+  25% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  70%,
+  80% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+.gallery-hint .hint-icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin: 0 2px;
+  vertical-align: -2px;
+  fill: none;
+  stroke: var(--popup-text);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.share-font {
+  margin-top: 10px;
+}
+
+/* Typography → Custom fonts: uploaded fonts stay one click away (fonts.js). */
+.custom-font-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+.custom-font-list:empty {
+  display: none;
+}
+.custom-font-chip {
+  max-width: 100%;
+  min-height: 32px;
+  padding: 5px 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid var(--popup-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--popup-text);
+  font-size: var(--text-field);
+}
+.custom-font-chip:hover {
+  background: var(--popup-surface);
+}
+.custom-font-chip[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--accent);
 }

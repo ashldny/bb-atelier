@@ -8,6 +8,7 @@ import { escapeHtml } from '../utils/sanitization.js';
 import { initTabGroup } from './tabs.js';
 import { updateContrastBadges } from './contrastBadges.js';
 import { initFonts } from './fonts.js';
+import { initTextScale } from './textScale.js';
 
 let palette;
 let commitTimer;
@@ -130,6 +131,7 @@ export function initTheme(sync, local) {
   // With "match my device" on, edit the theme the page is showing right now.
   setPaletteInputs(resolvePalette(sync, matchMedia('(prefers-color-scheme: dark)').matches));
   initFonts(local);
+  initTextScale(local);
   initTabGroup('.sub-tab-btn', '.sub-content', 'subtab');
   // Open the preset list that contains the current theme.
   initTabGroup('.mode-btn', '.mode-panel', 'mode', isDark(palette.pageBg) ? 'dark' : 'light');

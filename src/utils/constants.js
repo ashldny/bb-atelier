@@ -40,3 +40,13 @@ export const FEEDBACK_FORM = {
   versionEntry: '',
 };
 export const MAX_FEEDBACK_LENGTH = 2000;
+
+// Typography → Text size: a multiplier on Blackboard's root font size (1 = unchanged).
+export const TEXT_SCALE = { min: 0.85, max: 1.3, step: 0.05, default: 1 };
+export function normalizeTextScale(value) {
+  const scale = typeof value === 'number' ? value : Number.NaN;
+  if (!Number.isFinite(scale)) return TEXT_SCALE.default;
+  const clamped = Math.min(TEXT_SCALE.max, Math.max(TEXT_SCALE.min, scale));
+  const steps = Math.round(1 / TEXT_SCALE.step);
+  return Math.round(clamped * steps) / steps;
+}

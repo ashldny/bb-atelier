@@ -33,6 +33,8 @@ import { buildCourseColorCss } from './courseColors.js';
 import { buildCourseChromeCss } from './courseChromeCss.js';
 import { buildLoginCss } from './loginCss.js';
 import { buildGradesCss } from './gradesCss.js';
+import { buildPanelsCss } from './panelsCss.js';
+import { buildControlsCss } from './controlsCss.js';
 
 /**
  * Build the complete theme CSS string from palette overrides
@@ -187,8 +189,7 @@ export function buildFullThemeCss(overrides, darkOverrides, staticVars) {
   background-color: var(--page-bg-hover);
 }
 
-/* ACCENT */
-.color-selection-live-mode.color-selection-preview-bb-close .bb-close,
+/* ACCENT (panel X buttons follow their container instead: see panelsCss.js) */
 .color-selection-live-mode .active.base-navigation-button-content,
 .color-selection-live-mode .active .integration-navigation-button-content {
   background-color: var(--accent-surface) !important;
@@ -310,17 +311,6 @@ bb-ui-pagehelp .js-page-help .ms-Button.ms-Button--icon:is([aria-expanded='true'
   stroke: none !important;
 }
 
-/* LOADING SPINNER: <bb-ui-circular-progress> arc. Its stroke (#a234b5) comes from a
-   hashed makeStyles rule in the cross-origin CDN sheet, so Tier 3 cannot remap it;
-   the custom-element tag is stable. MUI's own spinner follows the same accent. */
-bb-ui-circular-progress svg path,
-.MuiCircularProgress-circle {
-  stroke: var(--accent-on-page) !important;
-}
-.MuiCircularProgress-root {
-  color: var(--accent-on-page) !important;
-}
-
 /* GRADES page: course-activity chart icon is a black-filled legacy SVG. */
 .grade-progress-chart-link .svg-icon {
   fill: var(--page-text-2);
@@ -390,6 +380,7 @@ bb-ui-circular-progress svg path,
 `);
 
   // Page-specific Tier 2 modules, each documented in its own file.
-  lines.push(buildCourseColorCss(), buildCourseChromeCss(), buildLoginCss(), buildGradesCss());
+  const tier2 = [buildCourseColorCss, buildCourseChromeCss, buildLoginCss, buildGradesCss];
+  lines.push(...[...tier2, buildPanelsCss, buildControlsCss].map((build) => build()));
   return purgeDarkReaderCss(lines.join('\n'));
 }

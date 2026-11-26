@@ -1,7 +1,7 @@
 {
   "name": "Bb Atelier",
   "description": "Personalize Blackboard Ultra with themes, fonts and course covers.",
-  "version": "2.0",
+  "version": "2.1",
   "manifest_version": 3,
   "permissions": ["activeTab", "storage", "unlimitedStorage", "scripting"],
   "optional_host_permissions": ["*://*/*"],

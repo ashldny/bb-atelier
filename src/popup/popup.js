@@ -1,6 +1,7 @@
 import { initTabs } from './tabs.js';
 import { initTheme } from './theme.js';
 import { initSaved } from './savedThemes.js';
+import { initGallery } from './gallery.js';
 import { initSystemScheme } from './systemScheme.js';
 import { initAbout } from './about.js';
 import { initCourseCovers } from './courseCovers.js';
@@ -34,13 +35,14 @@ async function boot() {
       throw new Error(initialized?.error || 'Storage initialization failed');
     const [stored, local] = await Promise.all([
       chrome.storage.sync.get(null),
-      chrome.storage.local.get(['font', 'fontName', 'activeTab']),
+      chrome.storage.local.get(['font', 'fontName', 'customFonts', 'textScale', 'activeTab']),
     ]);
     const sync = { ...DEFAULT_SETTINGS, ...stored };
     setToastPreference(sync.bbTheme?.showToast !== false);
     initCustomSelects();
     initTheme(sync, local);
     initSaved();
+    initGallery();
     initSystemScheme(sync);
     initSettingsTab(sync);
     initCoverageAudit();
